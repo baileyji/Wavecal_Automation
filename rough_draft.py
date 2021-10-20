@@ -37,12 +37,20 @@ class NKTContrast():
     This class performs various functions in the NKT Photon instrument.
     
     """
+    #Opens communication channel with system
+    peHandle = c_PE_HANDLE('insert handle here')
+    name = c_char_p('insert name here')
+    library.PE_Open(peHandle, name)
+    
     def status():
         """
         Returns
         -------
         Status of the instrument (PE_STATUS)
         """
+        pegetstatusstr = library.PEGetStatusStr
+        pegetstatusstr.restype = c_char_p
+        pegetstatusstr(code)
         
     def wavecal(wave1, wave2):
         """
