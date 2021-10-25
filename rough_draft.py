@@ -32,6 +32,26 @@ try:
 except Exception as excep:
     print(excep, 'Configuration file not found.')
     
+class PESTATUS(IntEnum):
+    """
+    Passes enums in c into Python
+    
+    """
+    PE_SUCCESS = 0
+    PE_INVALID_HANDLE = 1
+    PE_FAILURE = 2
+    PE_MISSING_CONFIGFILE = 3
+    PE_INVALID_CONFIGURATION = 4
+    PE_INVALID_WAVELENGTH = 5
+    PE_MISSING_HARMONIC_FILTER = 6
+    PE_INVALID_FILTER = 7
+    PE_UNKNOWN = 8
+    PE_INVALID_GRATING = 9
+    PE_INVALID_BUFFER = 10
+    PE_INVALID_BUFFER_SIZE = 11
+    PE_UNSUPPORTED_CONFIGURATION = 12
+    PE_NO_FILTER_CONNECTED = 13
+    
 class NKTContrast():
     """
     This class performs various functions in the NKT Photon instrument.
@@ -93,8 +113,7 @@ class NKTContrast():
 if __name__ == '__main__':
     #from flask import Flask
     #Argparse here. Takes some arguments.
-    #PE_CREATE. Creates a new environment
-    #Open file
+    pe_open
     #...
     #Close file
     #PE_DESTROY. Destroys the environment
