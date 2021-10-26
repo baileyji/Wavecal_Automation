@@ -10,6 +10,7 @@ This code is for the ease of communication with the LLTF Contrast at the Subaru 
 from ctypes import *
 from sys import platform
 import os
+from enum import IntEnum
 
 #Checking which dll file to use.
 if platform.startswith('win64'):
@@ -52,6 +53,9 @@ class PESTATUS(IntEnum):
     PE_UNSUPPORTED_CONFIGURATION = 12
     PE_NO_FILTER_CONNECTED = 13
     
+    def __init__(self, value):
+        self._as_parameter_ = int(value)
+        
 class NKTContrast():
     """
     This class performs various functions in the NKT Photon instrument.
@@ -71,7 +75,8 @@ class NKTContrast():
         """
         #Acquire handle on LLTF Contrast
         peCreate = library.PE_Create
-        peCreate.argtypes = [c_char_p, c_PE_HANDLE_p]
+        peCreate.argtypes = [c_char_p, PESTATUS]
+        peC
         
         #Open communication channel
         peOpen = library.PE_Open
