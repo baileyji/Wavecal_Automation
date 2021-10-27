@@ -76,7 +76,7 @@ class NKTContrast():
     def __init__(self):
         s
         
-    def pe_open(self):
+    def pe_open(self, peHandle, conffile, name):
         """
         Opens communication channel with system
         
@@ -93,7 +93,7 @@ class NKTContrast():
         peOpen.restypes[PE_STATUS]
         return peOpen(peHandle, name)
     
-    def status(self):
+    def status(self, code):
         """
         Gets status of the instrument (PE_STATUS)
         
@@ -103,7 +103,7 @@ class NKTContrast():
         peGetStatusStr.restypes = c_char_p
         return pegetstatusstr(code)
         
-    def get_wavelength(self):
+    def get_wavelength(self, peHandle, wavelength):
         """
         Returns the central wavelength filtered by the system in nanometers.
 
@@ -111,14 +111,14 @@ class NKTContrast():
         peGetWavelength = library.PE_GetWavelength
         peGetWavelength.argtypes = [CPE_HANDLE, c_double_p]
         peGetWavelength.restypes = PE_STATUS
-        
-    def wavecal(self, wave1, wave2):
+        peGetWavelength(peHandle, wavelength)
+    def wavecal(self):
         """
         Calibrates the instrument (Not sure which pe function i use here)
         
         """
         
-    def pe_close(self):
+    def pe_close(self, peHandle):
         """
         Closes communication channel with system
 
