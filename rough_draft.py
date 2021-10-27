@@ -29,11 +29,11 @@ except Exception as excep:
 
 #Look for config file. Maybe make this an argument so user can plug in their own config file?
 try:
-    os.path.isfile('C:\Program Files (x86)\Photon etc\PHySpecV2/system.xml')
+    conffile = os.path.isfile('C:\Program Files (x86)\Photon etc\PHySpecV2/system.xml')
 except Exception as excep:
     print(excep, 'Configuration file not found.')
     
-class PESTATUS(IntEnum):
+class PE_STATUS(IntEnum):
     """
     Passes enums in c into Python
     
@@ -55,6 +55,14 @@ class PESTATUS(IntEnum):
     
     def __init__(self, value):
         self._as_parameter_ = int(value)
+
+class PE_HANDLE:
+    def __init__(self, c_void_p):
+        self._as_parameter_ = c_void_p
+        
+class CPE_HANDLE:
+    def __init__(self, c_void_p):
+        self._as_parameter_ = c_void_p
         
 class NKTContrast():
     """
@@ -75,29 +83,35 @@ class NKTContrast():
         """
         #Acquire handle on LLTF Contrast
         peCreate = library.PE_Create
-        peCreate.argtypes = [c_char_p, PESTATUS]
-        peC
+        peCreate.argtypes = [c_char_p, ctypes.POINTER(PESTATUS)]
+        peCreate.restypes = [PE_STATUS]
+        peCreate(conffile, peHandle)
         
         #Open communication channel
         peOpen = library.PE_Open
+        peOpen.argtypes[PE_HANDLE, c_char_p]
+        peOpen.restypes[PE_STATUS]
+        return peOpen(peHandle, name)
     
     def status(self):
         """
         Gets status of the instrument (PE_STATUS)
         
         """
-        pegetstatusstr = library.PEGetStatusStr
-        pegetstatusstr.argtypes = []
-        pegetstatusstr.restype = c_char_p
+        peGetStatusStr = library.PEGetStatusStr
+        peGetStatusStr.argtypes = [PE_STATUS]
+        peGetStatusStr.restypes = c_char_p
+        return pegetstatusstr(code)
         
     def get_wavelength(self):
         """
         Returns the central wavelength filtered by the system in nanometers.
 
         """
-        pegetwavelength = library.PE_GetWavelength
-        pegetwavelength.restype = c_double_p
-    
+        peGetWavelength = library.PE_GetWavelength
+        peGetWavelength.argtypes = [CPE_HANDLE, c_double_p]
+        peGetWavelength.restypes = PE_STATUS
+        
     def wavecal(self, wave1, wave2):
         """
         Calibrates the instrument (Not sure which pe function i use here)
@@ -111,9 +125,15 @@ class NKTContrast():
         """
         #Close communication channel
         peClose = library.PE_Close
+        peClose.argtypes = PE_HANDLE
+        peClose.restypes = PE_STATUS
+        peClose(peHandle)
         
         #Destroys filter resource created with PE_Create
         peDestroy = library.PE_Destroy
+        peDestroy.argtypes = PE_HANDLE
+        peDestroy.restypes = PE_STATUS
+        return peDestroy(peHandle)
         
 if __name__ == '__main__':
     #from flask import Flask
