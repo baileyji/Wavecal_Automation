@@ -27,9 +27,9 @@ try:
 except Exception as excep:
     print(excep, 'Could not load .dll file.')
 
-#Look for config file. Maybe make this an argument so user can plug in their own config file?
+#Look for config file. user_conffile is put in by user, maybe as argument.
 try:
-    conffile = os.path.isfile('C:\Program Files (x86)\Photon etc\PHySpecV2/system.xml')
+    conffile = user_conffile
 except Exception as excep:
     print(excep, 'Configuration file not found.')
     
@@ -74,7 +74,7 @@ class NKTContrast():
     
     """
     def __init__(self):
-        s
+        pass
         
     def pe_open(self, peHandle, conffile, name):
         """
