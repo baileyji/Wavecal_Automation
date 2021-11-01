@@ -76,7 +76,7 @@ class NKTContrast():
     def __init__(self):
         pass
         
-    def NKT.Open(self, peHandle, conffile, name):
+    def NKT.Open(self):
         """
         Opens communication channel with system
         
