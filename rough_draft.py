@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Oct 13 22:18:35 2021
-
 @author: Maile Sasaki
-
 This code is for the ease of communication with the LLTF Contrast at the Subaru Observatory.
 """
 
@@ -30,6 +28,7 @@ except Exception as excep:
 #Look for config file. user_conffile is put in by user, maybe as argument.
 try:
     conffile = user_conffile
+    
 except Exception as excep:
     print(excep, 'Configuration file not found.')
     
@@ -76,53 +75,52 @@ class NKTContrast():
     def __init__(self):
         pass
         
-    def NKT.Open(self):
+    def NKT_Open(self):
         """
         Opens communication channel with system
         
         """
         #Acquire handle on LLTF Contrast
-        peCreate = library.PE_Create
-        peCreate.argtypes = [c_char_p, ctypes.POINTER(PESTATUS)]
-        peCreate.restypes = [PE_STATUS]
-        peCreate(conffile, peHandle)
+        pe_Create = library.PE_Create
+        pe_Create.argtypes = [c_char_p, ctypes.POINTER(PESTATUS)]
+        pe_Create.restypes = [PE_STATUS]
         
         #Open communication channel
-        peOpen = library.PE_Open
-        peOpen.argtypes[PE_HANDLE, c_char_p]
-        peOpen.restypes[PE_STATUS]
-        return peOpen(peHandle, name)
+        pe_Open = library.PE_Open
+        pe_Open.argtypes[PE_HANDLE, c_char_p]
+        pe_Open.restypes[PE_STATUS]
     
-    def NKT.Status(self, code):
+    def NKT_Status(self, code):
         """
-        Gets status of the instrument (PE_STATUS)
+        Gets status of the instrument.
         
         """
-        peGetStatusStr = library.PEGetStatusStr
-        peGetStatusStr.argtypes = [PE_STATUS]
-        peGetStatusStr.restypes = c_char_p
-        return pegetstatusstr(code)
+        peGet
+        pe_GetStatusStr = library.PE_GetStatusStr
+        pe_GetStatusStr.argtypes = [PE_STATUS]
+        pe_GetStatusStr.restypes = c_char_p
         
-    def NKT.Wavelength(self, peHandle, wavelength):
+        pe_GetSystemName = library.PE_GetSystemName
+        pe_GetSystemName.argtypes[CPE_HANDLE, c_int, c_char_p]
+        
+    def NKT_Wavelength(self, peHandle, wavelength):
         """
         Returns the central wavelength filtered by the system in nanometers.
-
         """
         peGetWavelength = library.PE_GetWavelength
         peGetWavelength.argtypes = [CPE_HANDLE, c_double_p]
         peGetWavelength.restypes = PE_STATUS
         peGetWavelength(peHandle, wavelength)
         
-    def NKT.Calibrate(self):
+    def NKT_Calibrate(self):
         """
         Calibrates the instrument (Not sure which pe function i use here)
         
         """
         
-    def NKT.Close(self, peHandle):
+    def NKT_Close(self, peHandle):
         """
         Closes communication channel with system
-
         """
         #Close communication channel
         peClose = library.PE_Close
