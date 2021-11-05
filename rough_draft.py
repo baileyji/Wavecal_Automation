@@ -95,7 +95,7 @@ class NKTContrast():
         Gets status of the instrument.
         
         """
-        peGet
+        
         pe_GetStatusStr = library.PE_GetStatusStr
         pe_GetStatusStr.argtypes = [PE_STATUS]
         pe_GetStatusStr.restypes = c_char_p
@@ -103,41 +103,53 @@ class NKTContrast():
         pe_GetSystemName = library.PE_GetSystemName
         pe_GetSystemName.argtypes[CPE_HANDLE, c_int, c_char_p]
         
-    def NKT_Wavelength(self, peHandle, wavelength):
+    def NKT_Wavelength(self):
         """
         Returns the central wavelength filtered by the system in nanometers.
         """
-        peGetWavelength = library.PE_GetWavelength
-        peGetWavelength.argtypes = [CPE_HANDLE, c_double_p]
-        peGetWavelength.restypes = PE_STATUS
-        peGetWavelength(peHandle, wavelength)
+        pe_GetWavelength = library.PE_GetWavelength
+        pe_GetWavelength.argtypes = [CPE_HANDLE, c_double_p]
+        pe_GetWavelength.restypes = PE_STATUS
+        
+        pe_GetWavelengthRange = library.pe_GetWavelengthRange
+        pe_GetWavelengthRange.argtypes = [CPE_HANDLE, c_double_p]
+        pe_GetWavelengthRange.restypes = PE_STATUS
         
     def NKT_Calibrate(self):
         """
-        Calibrates the instrument (Not sure which pe function i use here)
+        Calibrates the instrument
         
         """
         
-    def NKT_Close(self, peHandle):
+    def NKT_GratingWavelength(self):
+        """
+        Retrieves the wavelength range of the grating specified by index.
+        
+        """
+    def NKT_CalibrateGrating(self):
+        """
+        Calibrates the central wavelength of the grating.
+
+        """
+    def NKT_Close(self):
         """
         Closes communication channel with system
         """
         #Close communication channel
-        peClose = library.PE_Close
-        peClose.argtypes = PE_HANDLE
-        peClose.restypes = PE_STATUS
-        peClose(peHandle)
+        pe_Close = library.PE_Close
+        pe_Close.argtypes = PE_HANDLE
+        pe_Close.restypes = PE_STATUS
         
         #Destroys filter resource created with PE_Create
-        peDestroy = library.PE_Destroy
-        peDestroy.argtypes = PE_HANDLE
-        peDestroy.restypes = PE_STATUS
-        return peDestroy(peHandle)
+        pe_Destroy = library.PE_Destroy
+        pe_Destroy.argtypes = PE_HANDLE
+        pe_Destroy.restypes = PE_STATUS
+        
         
 if __name__ == '__main__':
     #from flask import Flask
     #Argparse here. Takes some arguments.
-    pe_open
+    
     #...
     #Close file
     #PE_DESTROY. Destroys the environment
