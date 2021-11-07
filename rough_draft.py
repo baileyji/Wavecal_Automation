@@ -67,28 +67,48 @@ class NKTContrast():
     """
     This class performs various functions in the NKT Photon instrument.
     ------
-    Before performing any functions, please start connection with pe_open.
+    Before performing any functions, please start connection with NKT_Open.
     ------
-    After you're done, please close communications using pe_close.
+    After you're done, please close communications using NKT_Close.
     
     """
     def __init__(self):
-        pass
+        self.conffile = conffile
         
-    def NKT_Open(self):
+    def NKT_Open(self, conffile):
         """
         Opens communication channel with system
         
+        Inputs:
+            index - Position of the system
         """
         #Acquire handle on LLTF Contrast
         pe_Create = library.PE_Create
-        pe_Create.argtypes = [c_char_p, ctypes.POINTER(PESTATUS)]
-        pe_Create.restypes = [PE_STATUS]
+        pe_Create.argtypes = [c_char_p, POINTER(PESTATUS)]
+        pe_Create.restypes = PE_STATUS
         
+        #Retrieves system name
+        pe_GetSystemName = library.PE_GetSystemName
+        pe_GetSystemName.argtypes = [CPE_HANDLE, c_int, c_char_p]
+        
+        #Retrieves version number of library
+        pe_LibraryVersion = library.PE_GetLibraryVersion
+        pe_LibraryVersion.restypes = c_int
+                
         #Open communication channel
         pe_Open = library.PE_Open
-        pe_Open.argtypes[PE_HANDLE, c_char_p]
-        pe_Open.restypes[PE_STATUS]
+        pe_Open.argtypes = [PE_HANDLE, c_char_p]
+        pe_Open.restypes = PE_STATUS
+        
+        try:
+            peHandle = PE_HANDLE
+            name = c_char_p
+            index = 
+            size = 
+            pe_Create(conffile, byref(peHandle))
+            pe_GetSystemName(peHandle, index, byref(name), size)
+        except:
+            pass
     
     def NKT_Status(self, code):
         """
@@ -100,8 +120,6 @@ class NKTContrast():
         pe_GetStatusStr.argtypes = [PE_STATUS]
         pe_GetStatusStr.restypes = c_char_p
         
-        pe_GetSystemName = library.PE_GetSystemName
-        pe_GetSystemName.argtypes[CPE_HANDLE, c_int, c_char_p]
         
     def NKT_Wavelength(self):
         """
@@ -120,17 +138,44 @@ class NKTContrast():
         Calibrates the instrument
         
         """
+        pe_SetWavelength = library.PE_SetWavelength
+        pe_SetWavelength.argtypes = [PE_HANDLE, c_double]
+        pe_SetWavelength.restypes = PE_STATUS
         
-    def NKT_GratingWavelength(self):
+    def NKT_GratingStatus(self):
         """
         Retrieves the wavelength range of the grating specified by index.
         
         """
+        pe_GetGratingName = library.PE_GetGratingName
+        pe_GetGratingName.argtypes = [c_int, CPE_HANDLE, c_char_p]
+        pe_GetGratingName.restypes = PE_STATUS
+        
+        pe_GetGratingCount = library.PE_GetGratingCount
+        pe_GetGratingCount.argtypes = [CPE_HANDLE, POINTER(c_int)]
+        pe_GetGratingCount.restypes = PE_STATUS
+        
+        pe_GetGratingWavelengthRange = library.PE_GetGratingWavelengthRange
+        pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, c_double_p]
+        pe_GetGratingWavelengthRange.restypes = PE_STATUS
+        
+        pe_GetGratingWavelengthExtendedRange = library.PE_GetGratingWavelengthExtendedRange
+        pe_GetGratingWavelengthExtendedRange.argtypes = [CPE_HANDLE, c_int, c_double_p]
+        pe_GetGratingWavelengthExtendedRange.restypes = PE_STATUS
+        
     def NKT_CalibrateGrating(self):
         """
         Calibrates the central wavelength of the grating.
 
         """
+        pe_GetGrating = library.PE_GetGrating
+        pe_GetGrating.argtypes = [PE_HANDLE, POINTER(c_int)]
+        pe_GetGrating.restypes = PE_STATUS
+        
+        pe_SetWavelengthOnGrating = library.PE_SetWavelengthOnGrating 
+        pe_SetWavelengthOnGrating.argtypes = [PE_HANDLE, c_int, c_double]
+        pe_SetWavelengthOnGrating.restypes = PE_STATUS
+        
     def NKT_Close(self):
         """
         Closes communication channel with system
