@@ -112,10 +112,9 @@ class NKTContrast():
     
     def NKT_Status(self, code):
         """
-        Gets status of the instrument.
+        Gets status of the current process.
         
         """
-        
         pe_GetStatusStr = library.PE_GetStatusStr
         pe_GetStatusStr.argtypes = [PE_STATUS]
         pe_GetStatusStr.restypes = c_char_p
@@ -123,42 +122,52 @@ class NKTContrast():
         
     def NKT_Wavelength(self):
         """
-        Returns the central wavelength filtered by the system in nanometers.
+        Returns the central wavelength and the wavelength range.
+        
         """
+        #Returns the central wavelength filtered by the system in nanometers
         pe_GetWavelength = library.PE_GetWavelength
         pe_GetWavelength.argtypes = [CPE_HANDLE, c_double_p]
         pe_GetWavelength.restypes = PE_STATUS
         
+        #Retrieves wavelength range of system in nanometers
         pe_GetWavelengthRange = library.pe_GetWavelengthRange
         pe_GetWavelengthRange.argtypes = [CPE_HANDLE, c_double_p]
         pe_GetWavelengthRange.restypes = PE_STATUS
         
     def NKT_Calibrate(self):
         """
-        Calibrates the instrument
+        Calibrates the instrument.
         
         """
+        #Sets central wavelength filtered by system in nanometers
         pe_SetWavelength = library.PE_SetWavelength
         pe_SetWavelength.argtypes = [PE_HANDLE, c_double]
         pe_SetWavelength.restypes = PE_STATUS
         
     def NKT_GratingStatus(self):
         """
-        Retrieves the wavelength range of the grating specified by index.
+        Retrieves information about the grating specified by the index, 
+        including the wavelength range.
         
         """
+        
+        #Retrieves grating name
         pe_GetGratingName = library.PE_GetGratingName
         pe_GetGratingName.argtypes = [c_int, CPE_HANDLE, c_char_p]
         pe_GetGratingName.restypes = PE_STATUS
         
-        pe_GetGratingCount = library.PE_GetGratingCount
+        #Retrieves system's grating count number
+        pe_GetGratingCount = library.PE_getGratingCount
         pe_GetGratingCount.argtypes = [CPE_HANDLE, POINTER(c_int)]
         pe_GetGratingCount.restypes = PE_STATUS
         
+        #Retrieve wavelength range of grating in nanometers
         pe_GetGratingWavelengthRange = library.PE_GetGratingWavelengthRange
         pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, c_double_p]
         pe_GetGratingWavelengthRange.restypes = PE_STATUS
         
+        #Retrieve extended wavelength range of grating in nanometers
         pe_GetGratingWavelengthExtendedRange = library.PE_GetGratingWavelengthExtendedRange
         pe_GetGratingWavelengthExtendedRange.argtypes = [CPE_HANDLE, c_int, c_double_p]
         pe_GetGratingWavelengthExtendedRange.restypes = PE_STATUS
@@ -168,10 +177,12 @@ class NKTContrast():
         Calibrates the central wavelength of the grating.
 
         """
+        #Retrieves grating
         pe_GetGrating = library.PE_GetGrating
         pe_GetGrating.argtypes = [PE_HANDLE, POINTER(c_int)]
         pe_GetGrating.restypes = PE_STATUS
         
+        #Sets central wavelength filtered by system in nanometers
         pe_SetWavelengthOnGrating = library.PE_SetWavelengthOnGrating 
         pe_SetWavelengthOnGrating.argtypes = [PE_HANDLE, c_int, c_double]
         pe_SetWavelengthOnGrating.restypes = PE_STATUS
