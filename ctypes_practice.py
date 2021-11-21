@@ -5,21 +5,21 @@ Created on Wed Nov  3 15:00:24 2021
 @author: autum
 """
 
+from enum import IntEnum
 from ctypes import *
 print(cdll.msvcrt)
 libc = cdll.msvcrt
 
-# =============================================================================
-# printf = libc.printf
-# printf(b"Hello, %s\n",  b"World!")
-# printf(b'Hello World!')
-# #Test argtypes
-# strlen = libc.strlen
-# strlen.argtypes = [c_char_p]
-# string = b'Hello World!'
-# #s = string.encode('ASCII')
-# print(strlen(string))
-# =============================================================================
+printf = libc.printf
+printf(b"Hello, %s\n",  b"World!")
+printf(b'Hello World!')
+
+#Test argtypes
+strlen = libc.strlen
+strlen.argtypes = [c_char_p]
+string = b'Hello World!'
+#s = string.encode('ASCII')
+print(strlen(string))
 
 #Test restypes
 # =============================================================================
@@ -51,7 +51,6 @@ libc = cdll.msvcrt
 # print(strchr(string, ch))
 # =============================================================================
 
-
 #Test out params
 # =============================================================================
 # strcpy = libc.strcpy
@@ -67,13 +66,60 @@ libc = cdll.msvcrt
 # strcpy.restype = c_char_p
 # string = b'Hello World!'
 # dest = c_char_p()
+# strcpy(byref(dest), string)
 # print(strcpy(byref(dest), string))
 # =============================================================================
 frexp = libc.frexp
-frexp.argtypes = [c_double, POINTER(c_int)]
+frexp.argtypes = [c_double, POINTER(POINTER(c_int))]
 frexp.restype = c_double
 num = 275
-exp = c_int()
+exp = POINTER(c_int)()
 res = frexp(num, byref(exp))
 #new = cast(exp, c_void_p).value
 print('Fraction is:', res, 'Exponent is: ', exp.value)
+
+#Testing custom classes
+
+# =============================================================================
+# class PE_STATUS(IntEnum):
+#     """
+#     Passes enums in c into Python
+#     
+#     """
+#     PE_SUCCESS = 0
+#     PE_INVALID_HANDLE = 1
+#     PE_FAILURE = 2
+#     PE_MISSING_CONFIGFILE = 3
+#     PE_INVALID_CONFIGURATION = 4
+#     PE_INVALID_WAVELENGTH = 5
+#     PE_MISSING_HARMONIC_FILTER = 6
+#     PE_INVALID_FILTER = 7
+#     PE_UNKNOWN = 8
+#     PE_INVALID_GRATING = 9
+#     PE_INVALID_BUFFER = 10
+#     PE_INVALID_BUFFER_SIZE = 11
+#     PE_UNSUPPORTED_CONFIGURATION = 12
+#     PE_NO_FILTER_CONNECTED = 13
+#     
+#     @classmethod
+#     def from_param(cls, obj):
+#         if not isinstance(obj, PE_STATUS):
+#             raise TypeError('Not a PE_STATUS instance.')
+#         return int(obj)
+#         
+# # =============================================================================
+# # if PE_STATUS.PE_INVALID_HANDLE == 1:
+# #     print('Success!')
+# # else:
+# #     print('Failure!')
+# # =============================================================================
+#         
+# atoi = libc.atoi
+# atoi.argtypes = [c_char_p]
+# atoi.restype = PE_STATUS
+# string = b'3'
+# num = atoi(string)
+# if num == PE_STATUS.PE_MISSING_CONFIGFILE:
+#     print('True!')
+# print(num)
+# =============================================================================
