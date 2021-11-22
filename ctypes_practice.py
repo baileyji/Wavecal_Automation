@@ -69,57 +69,61 @@ print(strlen(string))
 # strcpy(byref(dest), string)
 # print(strcpy(byref(dest), string))
 # =============================================================================
-frexp = libc.frexp
-frexp.argtypes = [c_double, POINTER(POINTER(c_int))]
-frexp.restype = c_double
-num = 275
-exp = POINTER(c_int)()
-res = frexp(num, byref(exp))
-#new = cast(exp, c_void_p).value
-print('Fraction is:', res, 'Exponent is: ', exp.value)
+# =============================================================================
+# frexp = libc.frexp
+# frexp.argtypes = [c_double, POINTER(c_int)]
+# frexp.restype = c_double
+# num = 275
+# exp = c_int()
+# res = frexp(num, byref(exp))
+# #new = cast(exp, c_void_p).value
+# print(exp)
+# print('Fraction is:', res, 'Exponent is: ', exp.value)
+# =============================================================================
 
 #Testing custom classes
 
+class PE_STATUS(IntEnum):
+    """
+    Passes enums in c into Python
+    
+    """
+    PE_SUCCESS = 0
+    PE_INVALID_HANDLE = 1
+    PE_FAILURE = 2
+    PE_MISSING_CONFIGFILE = 3
+    PE_INVALID_CONFIGURATION = 4
+    PE_INVALID_WAVELENGTH = 5
+    PE_MISSING_HARMONIC_FILTER = 6
+    PE_INVALID_FILTER = 7
+    PE_UNKNOWN = 8
+    PE_INVALID_GRATING = 9
+    PE_INVALID_BUFFER = 10
+    PE_INVALID_BUFFER_SIZE = 11
+    PE_UNSUPPORTED_CONFIGURATION = 12
+    PE_NO_FILTER_CONNECTED = 13
+    
+    @classmethod
+    def from_param(cls, obj):
+        if not isinstance(obj, PE_STATUS):
+            raise TypeError('Not a PE_STATUS instance.')
+        return int(obj)
+        
 # =============================================================================
-# class PE_STATUS(IntEnum):
-#     """
-#     Passes enums in c into Python
-#     
-#     """
-#     PE_SUCCESS = 0
-#     PE_INVALID_HANDLE = 1
-#     PE_FAILURE = 2
-#     PE_MISSING_CONFIGFILE = 3
-#     PE_INVALID_CONFIGURATION = 4
-#     PE_INVALID_WAVELENGTH = 5
-#     PE_MISSING_HARMONIC_FILTER = 6
-#     PE_INVALID_FILTER = 7
-#     PE_UNKNOWN = 8
-#     PE_INVALID_GRATING = 9
-#     PE_INVALID_BUFFER = 10
-#     PE_INVALID_BUFFER_SIZE = 11
-#     PE_UNSUPPORTED_CONFIGURATION = 12
-#     PE_NO_FILTER_CONNECTED = 13
-#     
-#     @classmethod
-#     def from_param(cls, obj):
-#         if not isinstance(obj, PE_STATUS):
-#             raise TypeError('Not a PE_STATUS instance.')
-#         return int(obj)
-#         
-# # =============================================================================
-# # if PE_STATUS.PE_INVALID_HANDLE == 1:
-# #     print('Success!')
-# # else:
-# #     print('Failure!')
-# # =============================================================================
-#         
-# atoi = libc.atoi
-# atoi.argtypes = [c_char_p]
-# atoi.restype = PE_STATUS
-# string = b'3'
-# num = atoi(string)
-# if num == PE_STATUS.PE_MISSING_CONFIGFILE:
-#     print('True!')
-# print(num)
+# if PE_STATUS.PE_INVALID_HANDLE == 1:
+#     print('Success!')
+# else:
+#     print('Failure!')
 # =============================================================================
+        
+atoi = libc.atoi
+atoi.argtypes = [c_char_p]
+atoi.restype = PE_STATUS
+string = b'3'
+num = atoi(string)
+if num == PE_STATUS.PE_MISSING_CONFIGFILE:
+    print('True!')
+print(num)
+
+pointerthing = pointer(num)
+print(pointerthing.value)

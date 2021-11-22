@@ -97,7 +97,7 @@ class NKTContrast():
         """
         #Acquire handle on LLTF Contrast
         pe_Create = library.PE_Create
-        pe_Create.argtypes = [c_char_p, POINTER(POINTER(PE_HANDLE))]
+        pe_Create.argtypes = [c_char_p, POINTER(PE_HANDLE)]
         pe_Create.restype = PE_STATUS
         
         #Retrieves number of systems available in config file
@@ -107,7 +107,7 @@ class NKTContrast():
         
         #Retrieves system name
         pe_GetSystemName = library.PE_GetSystemName
-        pe_GetSystemName.argtypes = [CPE_HANDLE, c_int, POINTER(c_char_p), c_int]
+        pe_GetSystemName.argtypes = [CPE_HANDLE, c_int, POINTER(c_char), c_int]
         pe_GetSystemName.restype = PE_STATUS
         
         #Retrieves version number of library
@@ -120,12 +120,12 @@ class NKTContrast():
         pe_Open.restype = PE_STATUS
         
         try:
-            peHandle_pointer = POINTER(PE_HANDLE)()
-            create_status = pe_Create(conffile, byref(peHandle_pointer))
+            peHandle = PE_HANDLE()
+            create_status = pe_Create(conffile, byref(peHandle))
             print('Status of handle creation:', create_status)
-            peHandle = peHandle_pointer.value
+            peHandle = peHandle.value
             num_sys = pe_GetSystemCount(peHandle)
-            name = c_char_p()
+            name = c_char()
             #How to get system size??? Need to look into
             name_status = pe_GetSystemName(peHandle, index, byref(name), sizeof(name))
             print('Status of system name retrieval:', name_status)
@@ -238,48 +238,48 @@ class NKTContrast():
         """
         #Retrieves grating
         pe_GetGrating = library.PE_GetGrating
-        pe_GetGrating.argtypes = [PE_HANDLE, POINTER(POINTER(c_int))]
+        pe_GetGrating.argtypes = [PE_HANDLE, POINTER(c_int)]
         pe_GetGrating.restype = PE_STATUS
         
         #Retrieves grating name
         pe_GetGratingName = library.PE_GetGratingName
-        pe_GetGratingName.argtypes = [CPE_HANDLE, c_int, c_char_p, c_int]
+        pe_GetGratingName.argtypes = [CPE_HANDLE, c_int, POINTER(c_char), c_int]
         pe_GetGratingName.restype = PE_STATUS
         
         #Retrieves system's grating count number
         pe_GetGratingCount = library.PE_getGratingCount
-        pe_GetGratingCount.argtypes = [CPE_HANDLE, POINTER(POINTER(c_int))]
+        pe_GetGratingCount.argtypes = [CPE_HANDLE, POINTER(c_int)]
         pe_GetGratingCount.restype = PE_STATUS
         
         #Retrieve wavelength range of grating in nanometers
         pe_GetGratingWavelengthRange = library.PE_GetGratingWavelengthRange
-        pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, POINTER(POINTER(c_double)), POINTER(POINTER(c_double))]
+        pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
         pe_GetGratingWavelengthRange.restype = PE_STATUS
         
         #Retrieve extended wavelength range of grating in nanometers
         pe_GetGratingWavelengthExtendedRange = library.PE_GetGratingWavelengthExtendedRange
-        pe_GetGratingWavelengthExtendedRange.argtypes = [CPE_HANDLE, c_int, POINTER(POINTER(c_double)), POINTER(POINTER(c_double))]
+        pe_GetGratingWavelengthExtendedRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
         pe_GetGratingWavelengthExtendedRange.restype = PE_STATUS
         
         try:
-            gratingIndex = POINTER(c_int)()
+            gratingIndex = c_int()
             getgratingstatus = pe_GetGrating(peHandle, byref(gratingIndex))
             gindex = gratingIndex.value
             print('Status of grating retrieval:', getgratingstatus, '\n', 
                   'Grating index:', gindex)
-            name = c_char_p()
+            name = c_char()
             #size = ??
             gratingnamestatus = pe_GetGratingName(peHandle, gindex, byref(name), size)
             print('Status of grating name retrieval:', gratingnamestatus)
-            count = POINTER(c_int)()
+            count = c_int()
             gratingcountstatus = pe_GetGratingCount(peHandle, byref(count))
             print('Status of grating count retrieval:', gratingcountstatus)
-            minimum = POINTER(c_double)()
-            maximum = POINTER(c_double)()
+            minimum = c_double()
+            maximum = c_double()
             gratingrangestatus = pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
             print('Status of grating wavelength range retrieval:', gratingrangestatus)
-            extended_min = POINTER(c_double)()
-            extended_max = POINTER(c_double)()
+            extended_min = c_double()
+            extended_max = c_double()
             extendedstatus = pe_GetGratingWavelengthExtendedRange(peHandle, gindex, byref(extended_min), byref(extended_max))
             print('Status of grating extended wavelength range retrieval:', extendedstatus)
             print('Grating name:', name.value, '\n', 
@@ -305,7 +305,7 @@ class NKTContrast():
         pe_SetWavelengthOnGrating.restype = PE_STATUS
         
         pe_GetGratingWavelengthRange = library.PE_GetGratingWavelengthRange
-        pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, POINTER(POINTER(c_double)), POINTER(POINTER(c_double))]
+        pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
         pe_GetGratingWavelengthRange.restype = PE_STATUS
         
         try:
@@ -313,10 +313,10 @@ class NKTContrast():
             print('Status of grating calibration:', gratingcalibstatus)
             if gratingcalibstatus == PE_STATUS.PE_SUCCESS:
                 print('Grating calibration set.')
-                 minimum = POINTER(c_double)()
-                 maximum = POINTER(c_double)()
-                 pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
-                 print('New grating wavelength range:', minimum, 'nm to', maximum, 'nm')
+                minimum = c_double()
+                maximum = c_double()
+                pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
+                print('New grating wavelength range:', minimum, 'nm to', maximum, 'nm')
             else:
                 print('Unable to calibrate grating.')
         except:
