@@ -83,7 +83,7 @@ class NKTContrast():
     
     """
     def __init__(self):
-        self.conffile = conffile.encode('ASCII')
+        pass
         
     def NKT_Open(self, conffile, index=0):
         """
@@ -120,6 +120,7 @@ class NKTContrast():
         pe_Open.restype = PE_STATUS
         
         try:
+            conffile = conffile.encode('ASCII')
             peHandle = PE_HANDLE()
             create_status = pe_Create(conffile, byref(peHandle))
             print('Status of handle creation:', create_status)
