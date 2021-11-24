@@ -119,8 +119,8 @@ class NKTContrast():
         pe_Open.argtypes = [PE_HANDLE, c_char_p]
         pe_Open.restype = PE_STATUS
         
+        conffile = conffile.encode('ASCII')
         try:
-            conffile = conffile.encode('ASCII')
             peHandle = PE_HANDLE()
             create_status = pe_Create(conffile, byref(peHandle))
             print('Status of handle creation:', create_status)
@@ -154,11 +154,8 @@ class NKTContrast():
         pe_GetStatusStr.argtypes = [PE_STATUS]
         pe_GetStatusStr.restype = c_char_p
         
-        try:
-            statusstring = pe_GetStatusStr(pestatuscode)
-            print(pestatuscode, ':', statusstring)
-        except:
-            print('Not able to retrieve status code string.')
+        statusstring = pe_GetStatusStr(pestatuscode)
+        print(pestatuscode, ':', statusstring)
         
     def NKT_Wavelength(self, peHandle):
         """
@@ -178,24 +175,21 @@ class NKTContrast():
         pe_GetWavelengthRange.argtypes = [CPE_HANDLE, POINTER(c_double), POINTER(c_double)]
         pe_GetWavelengthRange.restype = PE_STATUS
         
-        try:
-            wavelength = c_double()
-            getwavestatus = pe_GetWavelength(peHandle, byref(wavelength))
-            print('Status of wavelength retrieval:', getwavestatus)
-            if getwavestatus == PE_STATUS.PE_SUCCESS:
-                print('Wavelength:', wavelength.value, 'nm')
-            else:
-                print('Unable to retrieve wavelength.')
-            minimum = c_double()
-            maximum = c_double()
-            getrangestatus = pe_GetWavelengthRange(peHandle, byref(minimum), byref(maximum))
-            print('Status of wavelength range retrieval:', getrangestatus)
-            if getrangestatus == PE_STATUS.PE_SUCCESS:
-                print('Wavelength range:', minimum.value, 'to', maximum.value, 'nm')
-            else:
-                print('Unable to retrieve wavelength range.')
-        except:
-            print('Could not retrieve wavelength.')
+        wavelength = c_double()
+        getwavestatus = pe_GetWavelength(peHandle, byref(wavelength))
+        print('Status of wavelength retrieval:', getwavestatus)
+        if getwavestatus == PE_STATUS.PE_SUCCESS:
+            print('Wavelength:', wavelength.value, 'nm')
+        else:
+            print('Unable to retrieve wavelength.')
+        minimum = c_double()
+        maximum = c_double()
+        getrangestatus = pe_GetWavelengthRange(peHandle, byref(minimum), byref(maximum))
+        print('Status of wavelength range retrieval:', getrangestatus)
+        if getrangestatus == PE_STATUS.PE_SUCCESS:
+            print('Wavelength range:', minimum.value, 'to', maximum.value, 'nm')
+        else:
+            print('Unable to retrieve wavelength range.')
             
     def NKT_Calibrate(self, peHandle, wavelength):
         """
@@ -215,18 +209,15 @@ class NKTContrast():
         pe_GetWavelength.argtypes = [CPE_HANDLE, POINTER(c_double)]
         pe_GetWavelength.restype = PE_STATUS
         
-        try:
-            setwavestatus = pe_SetWavelength(peHandle, wavelength)
-            print('Status of calibration:', setwavestatus)
-            if setwavestatus == PE_STATUS.PE_SUCCESS:
-                print('Central wavelength set.')
-                newwavelength = c_double()
-                pe_GetWavelength(peHandle, byref(newwavelength))
-                print('New central wavelength:', newwavelength.value)
-            else:
-                print('Unable to calibrate.')
-        except:
-            print('Could not calibrate wavelength.')
+        setwavestatus = pe_SetWavelength(peHandle, wavelength)
+        print('Status of calibration:', setwavestatus)
+        if setwavestatus == PE_STATUS.PE_SUCCESS:
+            print('Central wavelength set.')
+            newwavelength = c_double()
+            pe_GetWavelength(peHandle, byref(newwavelength))
+            print('New central wavelength:', newwavelength.value)
+        else:
+            print('Unable to calibrate.')
             
     def NKT_GratingStatus(self, peHandle):
         """
@@ -262,33 +253,30 @@ class NKTContrast():
         pe_GetGratingWavelengthExtendedRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
         pe_GetGratingWavelengthExtendedRange.restype = PE_STATUS
         
-        try:
-            gratingIndex = c_int()
-            getgratingstatus = pe_GetGrating(peHandle, byref(gratingIndex))
-            gindex = gratingIndex.value
-            print('Status of grating retrieval:', getgratingstatus, '\n', 
-                  'Grating index:', gindex)
-            name = c_char()
-            #size = ??
-            gratingnamestatus = pe_GetGratingName(peHandle, gindex, byref(name), size)
-            print('Status of grating name retrieval:', gratingnamestatus)
-            count = c_int()
-            gratingcountstatus = pe_GetGratingCount(peHandle, byref(count))
-            print('Status of grating count retrieval:', gratingcountstatus)
-            minimum = c_double()
-            maximum = c_double()
-            gratingrangestatus = pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
-            print('Status of grating wavelength range retrieval:', gratingrangestatus)
-            extended_min = c_double()
-            extended_max = c_double()
-            extendedstatus = pe_GetGratingWavelengthExtendedRange(peHandle, gindex, byref(extended_min), byref(extended_max))
-            print('Status of grating extended wavelength range retrieval:', extendedstatus)
-            print('Grating name:', name.value, '\n', 
-                  'Grating count number:', count.value, '\n', 
-                  'Grating wavelength range:', minimum, 'nm to', maximum, 'nm', '\n',
-                  'Grating extended wavelength range:', extended_min, 'nm to', extended_max, 'nm')
-        except:
-            print('Could not retrieve grating status.')
+        gratingIndex = c_int()
+        getgratingstatus = pe_GetGrating(peHandle, byref(gratingIndex))
+        gindex = gratingIndex.value
+        print('Status of grating retrieval:', getgratingstatus, '\n', 
+              'Grating index:', gindex)
+        name = c_char()
+        #size = ??
+        gratingnamestatus = pe_GetGratingName(peHandle, gindex, byref(name), size)
+        print('Status of grating name retrieval:', gratingnamestatus)
+        count = c_int()
+        gratingcountstatus = pe_GetGratingCount(peHandle, byref(count))
+        print('Status of grating count retrieval:', gratingcountstatus)
+        minimum = c_double()
+        maximum = c_double()
+        gratingrangestatus = pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
+        print('Status of grating wavelength range retrieval:', gratingrangestatus)
+        extended_min = c_double()
+        extended_max = c_double()
+        extendedstatus = pe_GetGratingWavelengthExtendedRange(peHandle, gindex, byref(extended_min), byref(extended_max))
+        print('Status of grating extended wavelength range retrieval:', extendedstatus)
+        print('Grating name:', name.value, '\n', 
+              'Grating count number:', count.value, '\n', 
+              'Grating wavelength range:', minimum, 'nm to', maximum, 'nm', '\n',
+              'Grating extended wavelength range:', extended_min, 'nm to', extended_max, 'nm')
             
     def NKT_CalibrateGrating(self, peHandle, gratingIndex, wavelength):
         """
@@ -309,19 +297,16 @@ class NKTContrast():
         pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
         pe_GetGratingWavelengthRange.restype = PE_STATUS
         
-        try:
-            gratingcalibstatus = pe_SetWavelengthOnGrating(peHandle, gratingIndex, wavelength)
-            print('Status of grating calibration:', gratingcalibstatus)
-            if gratingcalibstatus == PE_STATUS.PE_SUCCESS:
-                print('Grating calibration set.')
-                minimum = c_double()
-                maximum = c_double()
-                pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
-                print('New grating wavelength range:', minimum, 'nm to', maximum, 'nm')
-            else:
-                print('Unable to calibrate grating.')
-        except:
-            print('Could not calibrate grating.')
+        gratingcalibstatus = pe_SetWavelengthOnGrating(peHandle, gratingIndex, wavelength)
+        print('Status of grating calibration:', gratingcalibstatus)
+        if gratingcalibstatus == PE_STATUS.PE_SUCCESS:
+            print('Grating calibration set.')
+            minimum = c_double()
+            maximum = c_double()
+            pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
+            print('New grating wavelength range:', minimum, 'nm to', maximum, 'nm')
+        else:
+            print('Unable to calibrate grating.')
             
     def NKT_Close(self):
         """
@@ -340,14 +325,16 @@ class NKTContrast():
         pe_Destroy = library.PE_Destroy
         pe_Destroy.argtypes = [PE_HANDLE]
         pe_Destroy.restype = PE_STATUS
-        
+    
         try:
             closestatus = pe_Close(peHandle)
             print('Status of closing system:', closestatus)
             destroystatus = pe_Destroy(peHandle)
             print('Status of destroying system:', destroystatus)
-            if closestatus == PE_STATUS.PE_SUCCESS and destroystatus == PE_STATUS.PE_SUCCESS:
-                print('System successfully closed and destroyed!')
+        except:
+            print('Could not close system.')
+        if closestatus == PE_STATUS.PE_SUCCESS and destroystatus == PE_STATUS.PE_SUCCESS:
+            print('System successfully closed and destroyed!')
                 
 if __name__ == '__main__':
     #from flask import Flask
