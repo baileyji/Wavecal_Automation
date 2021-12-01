@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 13 22:18:35 2021
 @author: Maile Sasaki
 This code is for the ease of communication with the LLTF Contrast at the Subaru Observatory.
 """
@@ -124,15 +123,21 @@ class NKTContrast():
             peHandle = PE_HANDLE()
             create_status = pe_Create(conffile, byref(peHandle))
             print('Status of handle creation:', create_status)
+            if not create_status == PE_STATUS.PE_SUCCESS:
+                raise RuntimeError('Unable to create handle.')                
             peHandle = peHandle.value
             num_sys = pe_GetSystemCount(peHandle)
             name = c_char()
             #How to get system size??? Need to look into
             name_status = pe_GetSystemName(peHandle, index, byref(name), sizeof(name))
             print('Status of system name retrieval:', name_status)
+            if not name_status == PE_STATUS.PE_SUCCESS:
+                raise RuntimeError('Unable to retrive system name.')
             library_vers = pe_LibraryVersion()
             open_status = pe_Open(peHandle, name.value)
             print('Status of system opening:', open_status, '\n')
+            if not open_status == PE_STATUS.PE_SUCCESS:
+                raise RuntimeError('Unable to open system.')
             print('Communcation channel opened.', '\n', 
                   'Library Version:', library_vers, '\n', 
                   'Number of systems:', num_sys, '\n',
@@ -217,8 +222,8 @@ class NKTContrast():
             pe_GetWavelength(peHandle, byref(newwavelength))
             print('New central wavelength:', newwavelength.value)
         else:
-            print('Unable to calibrate.')
-            
+            return RuntimeError('Unable to calibrate.')   
+         
     def NKT_GratingStatus(self, peHandle):
         """
         Retrieves information about the grating specified by the index, 
@@ -256,23 +261,33 @@ class NKTContrast():
         gratingIndex = c_int()
         getgratingstatus = pe_GetGrating(peHandle, byref(gratingIndex))
         gindex = gratingIndex.value
-        print('Status of grating retrieval:', getgratingstatus, '\n', 
+        print('Status of grating index retrieval:', getgratingstatus, '\n', 
               'Grating index:', gindex)
+        if not getgratingstatus == PE_STATUS.PE_SUCCESS:
+            raise RuntimeError('Unable to retrieve grating index.')
         name = c_char()
         #size = ??
         gratingnamestatus = pe_GetGratingName(peHandle, gindex, byref(name), size)
         print('Status of grating name retrieval:', gratingnamestatus)
+        if not gratingnamestatus == PE_STATUS.PE_SUCCESS:
+            raise RuntimeError('Unable to retrieve grating name.')
         count = c_int()
         gratingcountstatus = pe_GetGratingCount(peHandle, byref(count))
         print('Status of grating count retrieval:', gratingcountstatus)
+        if not gratingcountstatus == PE_STATUS.PE_SUCCESS:
+            raise RuntimeError('Unable to retrieve grating count.')
         minimum = c_double()
         maximum = c_double()
         gratingrangestatus = pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
         print('Status of grating wavelength range retrieval:', gratingrangestatus)
+        if not gratingrangestatus == PE_STATUS.PE_SUCCESS:
+            raise RuntimeError('Unable to retrieve grating wavelength range.')
         extended_min = c_double()
         extended_max = c_double()
         extendedstatus = pe_GetGratingWavelengthExtendedRange(peHandle, gindex, byref(extended_min), byref(extended_max))
         print('Status of grating extended wavelength range retrieval:', extendedstatus)
+        if not extendedstatus == PE_STATUS.PE_SUCCESS:
+            raise RuntimeError('Unable to retrieve grating extended wavelength range.')
         print('Grating name:', name.value, '\n', 
               'Grating count number:', count.value, '\n', 
               'Grating wavelength range:', minimum, 'nm to', maximum, 'nm', '\n',
@@ -329,13 +344,16 @@ class NKTContrast():
         try:
             closestatus = pe_Close(peHandle)
             print('Status of closing system:', closestatus)
+            if not closestatus == PE_STATUS.PE_SUCCESS:
+                raise RuntimeError('Unable to close system.')
             destroystatus = pe_Destroy(peHandle)
             print('Status of destroying system:', destroystatus)
+            if not destroystatus == PE_STATUS.PE_SUCCESS:
+                raise RuntimeError('Unable to destroy system.')
         except:
             print('Could not close system.')
-        if closestatus == PE_STATUS.PE_SUCCESS and destroystatus == PE_STATUS.PE_SUCCESS:
-            print('System successfully closed and destroyed!')
-                
+        print('System successfully closed and destroyed!')
+        
 if __name__ == '__main__':
     #from flask import Flask
     #Argparse here. Takes some arguments.
