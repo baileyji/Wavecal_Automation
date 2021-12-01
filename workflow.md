@@ -1,4 +1,5 @@
 NKT_Open
+
   -Creates handle
   -Tells user what new handle is
   -Retrieves number of systems
@@ -10,9 +11,13 @@ NKT_Open
   -Check status of system connection
   -If status is not PE_SUCCESS, fail state. Let user know.
   -Tells user the library version, number of systems, handle to system, system name
+
 NKT_StatusStr
+
   -Retrieves definition of status string (only there if needed by the user)
+
 NKT_Wavelength
+
   -Retrieves current wavelength of system
   -Checks status of retrieval
   -If PE_STATUS is PE_SUCCESS, retrieves the wavelength
@@ -21,10 +26,14 @@ NKT_Wavelength
   -Checks status of retrieval
   -If PE_STATUS is PE_SUCCESS, tells user the wavelength range
   -If not success, lets user know
+  
 NKT_Calibrate
+
   -Sets wavelength
   -If state = PE_SUCCESS, sets wavelength, retrieves status to let user know the new wavelength is set
+
 NKT_GratingStatus
+
   -Retrieves grating index
   -Checks status of grating index retrieval
   -if state doesn’t = PE_SUCCESS, fail state.
@@ -41,11 +50,15 @@ NKT_GratingStatus
   -Checks status of extended grating range retrieval
   -If state not equal PE_SUCCESS, fail state.
   -Prints out grating name, grating count number, grating wavelength range, and grating extended wavelength range
+
 NKT_CalibrateGrating
+
   -Calibrates grating
   -Checks status of grating calibration
   -If PE_SUCCESS, lets user know and retrieves grating wavelength range
+
 NKT_Close
+
   -Closes system. 
   -Lets user know the status of system closing.
   -If state not equal PE_SUCCESS, fail state.
