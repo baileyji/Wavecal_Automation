@@ -7,28 +7,7 @@ This code is for the ease of communication with the LLTF Contrast at the Subaru 
 from ctypes import *
 from sys import platform
 import os
-from enum import IntEnum
-
-#Checking which dll file to use.
-if platform.startswith('win64'):
-    lib_path = './win64/PE_Filter_SDK.dll'
-elif platform.startswith('win32'):
-    lib_path = './win32/PE_Filter_SDK.dll'
-else:
-    raise Exception('Not running on a Windows platform. Please retry.')
-    
-#Loading dll file with ctypes
-try:
-    library = CDLL(lib_path)
-    print('Successfully loaded', library)
-except Exception as excep:
-    print(excep, 'Could not load .dll file.')
-
-#Look for config file. user_conffile is put in by user, maybe as argument.
-try:
-    conffile = user_conffile
-except Exception as excep:
-    print(excep, 'Configuration file not found.')
+from enum import IntEnum    
     
 class PE_STATUS(IntEnum):
     """
@@ -117,20 +96,33 @@ class NKTContrast():
         pe_Open = library.PE_Open
         pe_Open.argtypes = [PE_HANDLE, c_char_p]
         pe_Open.restype = PE_STATUS
-        
-        conffile = conffile.encode('ASCII')
+
+        #Checking which dll file to use.
+        if platform.startswith('win64'):
+            lib_path = './win64/PE_Filter_SDK.dll'
+        elif platform.startswith('win32'):
+            lib_path = './win32/PE_Filter_SDK.dll'
+        else:
+            raise Exception('Not running on a Windows platform. Please retry.')
+        #Look for config file. user_conffile is put in by user, maybe as argument.
         try:
-            peHandle = PE_HANDLE()
-            create_status = pe_Create(conffile, byref(peHandle))             
-            peHandle = peHandle.value
-            num_sys = pe_GetSystemCount(peHandle)
-            name = c_char()
-            #How to get system size??? Need to look into
-            name_status = pe_GetSystemName(peHandle, index, byref(name), sizeof(name))
-            library_vers = pe_LibraryVersion()
-            open_status = pe_Open(peHandle, name.value)
-        except:
-            print('Could not connect to system.')
+            library = CDLL(lib_path)
+        except Exception as excep:
+            print(excep, 'Could not load .dll file.')
+            
+        conffile = conffile.encode('ASCII')
+        peHandle = PE_HANDLE()
+        create_status = pe_Create(conffile, byref(peHandle))             
+        peHandle = peHandle.value
+        num_sys = pe_GetSystemCount(peHandle)
+        name = c_char()
+        #How to get system size??? Need to look into
+        name_status = pe_GetSystemName(peHandle, index, byref(name), sizeof(name))
+        name = name.value
+        library_vers = pe_LibraryVersion()
+        open_status = pe_Open(peHandle, name.value)
+        return library_vers, num_sys, peHandle, name, create_status, open_status
+
     
     def NKT_StatusStr(self, pestatuscode):
         """
@@ -146,7 +138,7 @@ class NKTContrast():
         pe_GetStatusStr.restype = c_char_p
         
         statusstring = pe_GetStatusStr(pestatuscode)
-        print(pestatuscode, ':', statusstring)
+        return statusstring
         
     def NKT_Wavelength(self, peHandle):
         """
@@ -171,7 +163,11 @@ class NKTContrast():
         minimum = c_double()
         maximum = c_double()
         getrangestatus = pe_GetWavelengthRange(peHandle, byref(minimum), byref(maximum))
-            
+        wavelength_n = wavelength.value
+        minimum_n = minimum.value
+        maximum_n = maximum.value
+        return wavelength_n, minimum_n, maximum_n, getwavestatus, getrangestatus
+    
     def NKT_Calibrate(self, peHandle, wavelength):
         """
         Calibrates the instrument.
@@ -192,7 +188,9 @@ class NKTContrast():
         
         setwavestatus = pe_SetWavelength(peHandle, wavelength)
         newwavelength = c_double()
-        pe_GetWavelength(peHandle, byref(newwavelength))
+        getwavestatus = pe_GetWavelength(peHandle, byref(newwavelength))
+        wavelen_calib = newwavelength.value
+        return wavelen_calib, setwavestatus, getwavestatus
          
     def NKT_GratingStatus(self, peHandle):
         """
@@ -266,7 +264,9 @@ class NKTContrast():
         minimum = c_double()
         maximum = c_double()
         pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
- 
+        minimum_n = minimum.value
+        maximum_n = maximum.value
+        
     def NKT_Close(self):
         """
         Closes communication channel with system
@@ -285,9 +285,7 @@ class NKTContrast():
         pe_Destroy.argtypes = [PE_HANDLE]
         pe_Destroy.restype = PE_STATUS
     
-        try:
-            closestatus = pe_Close(peHandle)
-            destroystatus = pe_Destroy(peHandle)
-        except:
-            print('Could not close system.')
+        closestatus = pe_Close(peHandle)
+        destroystatus = pe_Destroy(peHandle)
         
+        return closestatus, destroystatus
