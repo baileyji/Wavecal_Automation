@@ -54,10 +54,6 @@ class CPE_HANDLE:
 class NKTContrast():
     """
     This class performs various functions in the NKT Photon instrument.
-    ------
-    Before performing any functions, please start connection with NKT_Open.
-    ------
-    After you're done, please close communications using NKT_Close.
     
     """
     def __init__(self):
@@ -66,11 +62,6 @@ class NKTContrast():
     def NKT_Open(self, conffile, index=0):
         """
         Creates and opens communication channel with system
-        
-        Inputs:
-            conffile (Required) - Path to configuration file. 
-                Usually in 'C:\Program Files (x86)\Photon etc\PHySpecV2\system.xml'
-            index (Optional) - Position of the system. Default is zero.
             
         """
         #Acquire handle on LLTF Contrast
