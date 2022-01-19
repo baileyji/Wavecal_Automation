@@ -84,6 +84,7 @@ class LLFT():
             print('Current central wavelength:', prev_wave, '/n',
                   'Current wavelength range:', prev_min, 'to', prev_max)
             new_wave, new_wavestatus, new_rangestatus = NKTContrast.NKT_Calibrate(peHandle, wavelength)
+            print('New central wavelength:', new_wave)
             return True
         except wavestatus or rangestatus or new_wavestatus or new_rangestatus != PE_STATUS.PE_SUCCESS:
             close = True
