@@ -231,7 +231,12 @@ class NKTContrast():
         extended_min = c_double()
         extended_max = c_double()
         extendedstatus = pe_GetGratingWavelengthExtendedRange(peHandle, gindex, byref(extended_min), byref(extended_max))
-       
+        minimum = minimum.value
+        maximum = maximum.value
+        extended_min = extended_min.value
+        extended_max = extended_max.value
+        return gindex, minimum, maximum, extended_min, extended_max, gratingnamestatus, gratingcountstatus, gratingrangestatus, extendedstatus
+                
     def NKT_CalibrateGrating(self, peHandle, gratingIndex, wavelength):
         """
         Calibrates the central wavelength of the grating.
@@ -254,10 +259,11 @@ class NKTContrast():
         gratingcalibstatus = pe_SetWavelengthOnGrating(peHandle, gratingIndex, wavelength)
         minimum = c_double()
         maximum = c_double()
-        pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
+        gratingrangestatus_n = pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
         minimum_n = minimum.value
         maximum_n = maximum.value
-        
+        return minimum_n, maximum_n, gratingcalibstatus, gratingrangestatus_n
+    
     def NKT_Close(self):
         """
         Closes communication channel with system
