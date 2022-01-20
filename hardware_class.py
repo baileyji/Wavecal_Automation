@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jan 14 12:06:19 2022
 
-@author: autum
-"""
 from Wavecal_Automation.rough_draft_noprintst import NKTContrast
 from Wavecal_Automation.rough_draft_noprintst import PE_STATUS
 
