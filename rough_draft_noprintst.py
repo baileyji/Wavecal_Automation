@@ -2,19 +2,6 @@ from ctypes import *
 from sys import platform
 import os
 from enum import IntEnum  
-
-if platform.startswith('win64'):
-    lib_path = './win64/PE_Filter_SDK.dll'
-elif platform.startswith('win32'):
-    lib_path = './win32/PE_Filter_SDK.dll'
-else:
-    raise Exception('Not running on a Windows platform. Please retry.')
-#Look for config file. user_conffile is put in by user, maybe as argument.
-try:
-    library = CDLL(lib_path)
-except Exception as excep:
-    print(excep, 'Could not load .dll file.')
-          
     
 class PE_STATUS(IntEnum):
     """
