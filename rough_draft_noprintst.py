@@ -1,13 +1,20 @@
-# -*- coding: utf-8 -*-
-"""
-@author: Maile Sasaki
-This code is for the ease of communication with the LLTF Contrast at the Subaru Observatory.
-"""
-
 from ctypes import *
 from sys import platform
 import os
-from enum import IntEnum    
+from enum import IntEnum  
+
+if platform.startswith('win64'):
+    lib_path = './win64/PE_Filter_SDK.dll'
+elif platform.startswith('win32'):
+    lib_path = './win32/PE_Filter_SDK.dll'
+else:
+    raise Exception('Not running on a Windows platform. Please retry.')
+#Look for config file. user_conffile is put in by user, maybe as argument.
+try:
+    library = CDLL(lib_path)
+except Exception as excep:
+    print(excep, 'Could not load .dll file.')
+          
     
 class PE_STATUS(IntEnum):
     """
@@ -57,13 +64,26 @@ class NKTContrast():
     
     """
     def __init__(self):
-        pass
-        
+        if platform.startswith('win64'):
+            self.lib_path = './win64/PE_Filter_SDK.dll'
+        elif platform.startswith('win32'):
+            self.lib_path = './win32/PE_Filter_SDK.dll'
+        else:
+            raise Exception('Not running on a Windows platform. Please retry.')
+            
+        #Look for config file. user_conffile is put in by user, maybe as argument.
+        try:
+            self.library = CDLL(lib_path)
+        except Exception as excep:
+            print(excep, 'Could not load .dll file.')
+    
     def NKT_Open(self, conffile, index=0):
         """
         Creates and opens communication channel with system
             
         """
+        library = self.library
+        
         #Acquire handle on LLTF Contrast
         pe_Create = library.PE_Create
         pe_Create.argtypes = [c_char_p, POINTER(PE_HANDLE)]
@@ -88,18 +108,6 @@ class NKTContrast():
         pe_Open.argtypes = [PE_HANDLE, c_char_p]
         pe_Open.restype = PE_STATUS
 
-        #Checking which dll file to use.
-        if platform.startswith('win64'):
-            lib_path = './win64/PE_Filter_SDK.dll'
-        elif platform.startswith('win32'):
-            lib_path = './win32/PE_Filter_SDK.dll'
-        else:
-            raise Exception('Not running on a Windows platform. Please retry.')
-        #Look for config file. user_conffile is put in by user, maybe as argument.
-        try:
-            library = CDLL(lib_path)
-        except Exception as excep:
-            print(excep, 'Could not load .dll file.')
             
         conffile = conffile.encode('ASCII')
         peHandle = PE_HANDLE()
@@ -124,6 +132,8 @@ class NKTContrast():
             Should be in form PE_STATUS.PE_ERRORCODE
             
         """
+        library = self.library
+
         pe_GetStatusStr = library.PE_GetStatusStr
         pe_GetStatusStr.argtypes = [PE_STATUS]
         pe_GetStatusStr.restype = c_char_p
@@ -139,6 +149,8 @@ class NKTContrast():
             peHandle (required) - Handle retrieved from NKT_Open
             
         """
+        library = self.library
+
         #Returns the central wavelength filtered by the system in nanometers
         pe_GetWavelength = library.PE_GetWavelength
         pe_GetWavelength.argtypes = [CPE_HANDLE, POINTER(c_double)]
@@ -168,6 +180,8 @@ class NKTContrast():
             wavelength (required) - Desired central wavelength to be filtered by system (nm)
         
         """
+        library = self.library
+
         #Sets central wavelength filtered by system in nanometers
         pe_SetWavelength = library.PE_SetWavelength
         pe_SetWavelength.argtypes = [PE_HANDLE, c_double]
@@ -192,6 +206,8 @@ class NKTContrast():
             peHandle (required) - Handle retrieved from NKT_Open
             
         """
+        library = self.library
+
         #Retrieves grating
         pe_GetGrating = library.PE_GetGrating
         pe_GetGrating.argtypes = [PE_HANDLE, POINTER(c_int)]
@@ -247,6 +263,8 @@ class NKTContrast():
             wavelength (required) - Desired central wavelength in nm
        
         """
+        library = self.library
+
         #Sets central wavelength filtered by system in nanometers
         pe_SetWavelengthOnGrating = library.PE_SetWavelengthOnGrating 
         pe_SetWavelengthOnGrating.argtypes = [PE_HANDLE, c_int, c_double]
@@ -272,6 +290,8 @@ class NKTContrast():
             peHandle (required) - Handle retrieved from NKT_Open
             
         """
+        library = self.library
+
         #Close communication channel
         pe_Close = library.PE_Close
         pe_Close.argtypes = [PE_HANDLE]

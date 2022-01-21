@@ -1,4 +1,3 @@
-
 from Wavecal_Automation.rough_draft_noprintst import NKTContrast
 from Wavecal_Automation.rough_draft_noprintst import PE_STATUS
 
@@ -120,6 +119,16 @@ class LLFT():
         return False
     
     def grating_wave(self, wavelength):
+        """
+        
+        Calibrates the LLTF grating.
+        
+        Parameters
+            wavelength (Required) - Central wavelength to calibrate the grating to.
+            conffile (Required) - Path to configuration file. 
+                Usually in 'C:\Program Files (x86)\Photon etc\PHySpecV2\system.xml'
+                
+        """
         close = False
         try:
             peHandle = self._open()
