@@ -4,23 +4,22 @@ Created on Wed Nov  3 15:00:24 2021
 
 @author: autum
 """
-
 from enum import IntEnum
 from ctypes import *
-print(cdll.msvcrt)
-libc = cdll.msvcrt
 
-printf = libc.printf
-printf(b"Hello, %s\n",  b"World!")
-printf(b'Hello World!')
-
-#Test argtypes
-strlen = libc.strlen
-strlen.argtypes = [c_char_p]
-string = b'Hello World!'
-#s = string.encode('ASCII')
-print(strlen(string))
-
+# =============================================================================
+# printf = libc.printf
+# printf(b"Hello, %s\n",  b"World!")
+# printf(b'Hello World!')
+# 
+# #Test argtypes
+# strlen = libc.strlen
+# strlen.argtypes = [c_char_p]
+# string = b'Hello World!'
+# #s = string.encode('ASCII')
+# print(strlen(string))
+# 
+# =============================================================================
 #Test restypes
 # =============================================================================
 # atol = libc.atol
@@ -115,15 +114,25 @@ class PE_STATUS(IntEnum):
 # else:
 #     print('Failure!')
 # =============================================================================
-        
-atoi = libc.atoi
-atoi.argtypes = [c_char_p]
-atoi.restype = PE_STATUS
-string = b'3'
-num = atoi(string)
-if num == PE_STATUS.PE_MISSING_CONFIGFILE:
-    print('True!')
-print(num)
+class NewClass():
+    def __init__(self):
+        print(cdll.msvcrt)
+        self.libc = cdll.msvcrt
+    
+    def Newfunc(self, string):
+        print('In Newfunc!')
+        libc = self.libc
+        atoi = libc.atoi
+        atoi.argtypes = [c_char_p]
+        atoi.restype = PE_STATUS
+        num = atoi(string)
+        # =============================================================================
+        # if num == PE_STATUS.PE_MISSING_CONFIGFILE:
+        #     print('True!')
+        # =============================================================================
+        return num
 
-pointerthing = pointer(num)
-print(pointerthing.value)
+# =============================================================================
+# pointerthing = pointer(num)
+# print(pointerthing.value)
+# =============================================================================

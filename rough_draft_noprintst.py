@@ -56,14 +56,11 @@ class NKTContrast():
         elif platform.startswith('win32'):
             self.lib_path = './win32/PE_Filter_SDK.dll'
         else:
-            raise Exception('Not running on a Windows platform. Please retry.')
+            raise Exception
             
         #Look for config file. user_conffile is put in by user, maybe as argument.
-        try:
-            self.library = CDLL(lib_path)
-        except Exception as excep:
-            print(excep, 'Could not load .dll file.')
-    
+        self.library = CDLL(lib_path)
+        
     def NKT_Open(self, conffile, index=0):
         """
         Creates and opens communication channel with system
@@ -144,7 +141,7 @@ class NKTContrast():
         pe_GetWavelength.restype = PE_STATUS
         
         #Retrieves wavelength range of system in nanometers
-        pe_GetWavelengthRange = library.pe_GetWavelengthRange
+        pe_GetWavelengthRange = library.PE_GetWavelengthRange
         pe_GetWavelengthRange.argtypes = [CPE_HANDLE, POINTER(c_double), POINTER(c_double)]
         pe_GetWavelengthRange.restype = PE_STATUS
         
@@ -264,12 +261,12 @@ class NKTContrast():
         gratingcalibstatus = pe_SetWavelengthOnGrating(peHandle, gratingIndex, wavelength)
         minimum = c_double()
         maximum = c_double()
-        gratingrangestatus_n = pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
+        gratingrangestatus_n = pe_GetGratingWavelengthRange(peHandle, gratingIndex, byref(minimum), byref(maximum))
         minimum_n = minimum.value
         maximum_n = maximum.value
         return minimum_n, maximum_n, gratingcalibstatus, gratingrangestatus_n
     
-    def NKT_Close(self):
+    def NKT_Close(self, peHandle):
         """
         Closes communication channel with system
         
