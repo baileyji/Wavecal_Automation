@@ -52,13 +52,11 @@ class NKTContrast():
     """
     def __init__(self):
         if platform.startswith('win64'):
-            self.lib_path = './win64/PE_Filter_SDK.dll'
+            lib_path = './win64/PE_Filter_SDK.dll'
         elif platform.startswith('win32'):
-            self.lib_path = './win32/PE_Filter_SDK.dll'
+            lib_path = './win32/PE_Filter_SDK.dll'
         else:
             raise Exception
-            
-        #Look for config file. user_conffile is put in by user, maybe as argument.
         self.library = CDLL(lib_path)
         
     def NKT_Open(self, conffile, index=0):
@@ -105,7 +103,6 @@ class NKTContrast():
         library_vers = pe_LibraryVersion()
         open_status = pe_Open(peHandle, name.value)
         return library_vers, num_sys, peHandle, name, create_status, open_status
-
     
     def NKT_StatusStr(self, pestatuscode):
         """
