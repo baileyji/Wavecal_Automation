@@ -1,59 +1,63 @@
-from Wavecal_Automation.rough_draft_noprintst import NKTContrast
-from Wavecal_Automation.rough_draft_noprintst import PE_STATUS
+from .lltfdll import NKTContrast, PE_STATUS
 
-class LLFT():
+
+class LLTFError(Exception):
+    pass
+
+
+class LLTF:
     """
-    
+
     Hardware class for connection to the LLTF High Contrast filter.
-    
+
     """
-    
+
     def __init__(self, conffile):
-        self._conn = None 
-        
+        self._conn = None
+
     def _open(self, index=0):
         """
-        
+
         Creates and opens connection with the system.
-        
+
         Parameters
-            conffile (Required) - Path to configuration file. 
+            conffile (Required) - Path to configuration file.
                 Usually in 'C:\Program Files (x86)\Photon etc\PHySpecV2\system.xml'
             index (Optional) - Position of the system. Default is zero.
-       
+
         """
         NKT = NKTContrast()
-        if self._conn is None:           
+        if self._conn is None:
             conffile = self.conffile
             library_vers, num_sys, peHandle, name, create_status, open_status = NKT.NKT_Open(conffile)
             if create_status or open_status != PE_STATUS.PE_SUCCESS:
-                raise RuntimeError  
+                raise RuntimeError
             self._conn = peHandle
             return self._conn
 
     def _close(self, peHandle):
         """
-        
+
         Closes connection with system.
-        
+
         Parameters
             peHandle (Required) - Handle to system
 
         """
         NKT = NKTContrast()
         if self._conn is not None:
-            closestatus, destroystatus = NKT.NKT_Close(peHandle)  
+            closestatus, destroystatus = NKT.NKT_Close(peHandle)
             if closestatus or destroystatus != PE_STATUS.PE_SUCCESS:
                 raise RuntimeError
-            self._conn = None  
+            self._conn = None
 
     def set_wave(self, wavelength):
         """
-        
+
         Calibrates central wavelength of the filter.
-        
+
         Parameters
-            conffile (Required) - Path to configuration file. 
+            conffile (Required) - Path to configuration file.
                 Usually in 'C:\Program Files (x86)\Photon etc\PHySpecV2\system.xml'
             wavelength (Required) - Desired central wavelength in nm
 
@@ -75,13 +79,13 @@ class LLFT():
             if close:
                 self._close(peHandle)
         return False
-    
+
     def get_wave(self):
         """
         Returns current central wavelength and wavelength range of filter.
-        
+
         Parameters
-            conffile (Required) - Path to configuration file. 
+            conffile (Required) - Path to configuration file.
                 Usually in 'C:\Program Files (x86)\Photon etc\PHySpecV2\system.xml'
 
         """
@@ -97,17 +101,17 @@ class LLFT():
             if close:
                 self._close(peHandle)
         return False
-    
+
     def grating_wave(self, wavelength):
         """
-        
+
         Calibrates the LLTF grating.
-        
+
         Parameters
             wavelength (Required) - Central wavelength to calibrate the grating to.
-            conffile (Required) - Path to configuration file. 
+            conffile (Required) - Path to configuration file.
                 Usually in 'C:\Program Files (x86)\Photon etc\PHySpecV2\system.xml'
-                
+
         """
         close = False
         NKT = NKTContrast()
