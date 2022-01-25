@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov  3 15:00:24 2021
-
-@author: autum
-"""
 from enum import IntEnum
 from ctypes import *
 
