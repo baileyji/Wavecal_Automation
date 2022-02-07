@@ -1,3 +1,9 @@
+"""
+The classes PE_STATUS, PE_HANDLE, and CPE_HANDLE are for converting c objects into
+    in the LLTF .dll file.
+NKTContrast converts c functions into python.
+
+"""
 from ctypes import *
 from sys import platform
 from enum import IntEnum
@@ -61,7 +67,8 @@ class NKTContrast():
     def NKT_Open(self, conffile, index=0):
         """
         Creates and opens communication channel with system.
-        Returns system handle, status of system creation and opening.
+        Returns:
+            peHandle - 
 
         """
         library = self.library
@@ -81,19 +88,6 @@ class NKTContrast():
         pe_Open.argtypes = [PE_HANDLE, c_char_p]
         pe_Open.restype = PE_STATUS
         
-# =============================================================================
-#         #Retrieves number of systems available in config file
-#         pe_GetSystemCount = library.PE_GetSystemCount
-#         pe_GetSystemCount.argtypes = [CPE_HANDLE]
-#         pe_GetSystemCount.restype = c_int
-# =============================================================================
-
-# =============================================================================
-#         #Retrieves version number of library
-#         pe_LibraryVersion = library.PE_GetLibraryVersion
-#         pe_LibraryVersion.restype = c_int
-# =============================================================================
-       
         conffile = conffile.encode('ASCII')
         peHandle = PE_HANDLE()
         create_status = pe_Create(conffile, byref(peHandle))
@@ -103,7 +97,7 @@ class NKTContrast():
         name_status = pe_GetSystemName(peHandle, index, byref(name), sizeof(name))
         name = name.value
         open_status = pe_Open(peHandle, name.value)
-        return peHandle, create_status, open_status
+        return peHandle, name, create_status, open_status
 
     def NKT_Close(self, peHandle):
         """
@@ -148,8 +142,37 @@ class NKTContrast():
 
         statusstring = pe_GetStatusStr(pestatuscode)
         return statusstring
+    
+    def NKT_LibraryVersion(self):
+        """
+        Retrieves library version number.
 
-    def NKT_Wavelength(self, peHandle):
+        """
+        library = self.library
+        
+        #Retrieves version number of library
+        pe_LibraryVersion = library.PE_GetLibraryVersion
+        pe_LibraryVersion.restype = c_int
+        
+        library_vers = pe_LibraryVersion()
+        return library_vers
+    
+    def NKT_GetSystemCount(self, peHandle):
+        """
+        Retrieves number of systems, connected or not.
+
+        """
+        library = self.library
+        
+        #Retrieves number of systems available in config file
+        pe_GetSystemCount = library.PE_GetSystemCount
+        pe_GetSystemCount.argtypes = [CPE_HANDLE]
+        pe_GetSystemCount.restype = c_int
+        
+        count = pe_GetSystemCount(peHandle)
+        return count
+        
+    def NKT_GetWavelength(self, peHandle):
         """
         Returns the central wavelength, wavelength range,
             and status of retrieval of both.
@@ -180,7 +203,7 @@ class NKTContrast():
         maximum_n = maximum.value
         return wavelength_n, minimum_n, maximum_n, getwavestatus, getrangestatus
 
-    def NKT_Calibrate(self, peHandle, wavelength):
+    def NKT_SetWavelength(self, peHandle, wavelength):
         """
         Calibrates the instrument.
         Returns the newly calibrated central wavelength and the status of 
@@ -204,96 +227,131 @@ class NKTContrast():
         pe_GetWavelength.restype = PE_STATUS
 
         setwavestatus = pe_SetWavelength(peHandle, wavelength)
-        newwavelength = c_double()
-        getwavestatus = pe_GetWavelength(peHandle, byref(newwavelength))
-        wavelen_calib = newwavelength.value
-        return wavelen_calib, setwavestatus, getwavestatus
+        return setwavestatus
 
-# =============================================================================
-#     def NKT_GratingStatus(self, peHandle):
-#         """
-#         Retrieves information about the grating specified by the index,
-#         including the wavelength range.
-# 
-#         Inputs:
-#             peHandle (required) - Handle retrieved from NKT_Open
-# 
-#         """
-#         library = self.library
-# 
-#         #Retrieves grating
-#         pe_GetGrating = library.PE_GetGrating
-#         pe_GetGrating.argtypes = [PE_HANDLE, POINTER(c_int)]
-#         pe_GetGrating.restype = PE_STATUS
-# 
-#         #Retrieves grating name
-#         pe_GetGratingName = library.PE_GetGratingName
-#         pe_GetGratingName.argtypes = [CPE_HANDLE, c_int, POINTER(c_char), c_int]
-#         pe_GetGratingName.restype = PE_STATUS
-# 
-#         #Retrieves system's grating count number
-#         pe_GetGratingCount = library.PE_getGratingCount
-#         pe_GetGratingCount.argtypes = [CPE_HANDLE, POINTER(c_int)]
-#         pe_GetGratingCount.restype = PE_STATUS
-# 
-#         #Retrieve wavelength range of grating in nanometers
-#         pe_GetGratingWavelengthRange = library.PE_GetGratingWavelengthRange
-#         pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
-#         pe_GetGratingWavelengthRange.restype = PE_STATUS
-# 
-#         #Retrieve extended wavelength range of grating in nanometers
-#         pe_GetGratingWavelengthExtendedRange = library.PE_GetGratingWavelengthExtendedRange
-#         pe_GetGratingWavelengthExtendedRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
-#         pe_GetGratingWavelengthExtendedRange.restype = PE_STATUS
-# 
-#         gratingIndex = c_int()
-#         getgratingstatus = pe_GetGrating(peHandle, byref(gratingIndex))
-#         gindex = gratingIndex.value
-#         name = c_char()
-#         #size = ??
-#         gratingnamestatus = pe_GetGratingName(peHandle, gindex, byref(name), size)
-#         count = c_int()
-#         gratingcountstatus = pe_GetGratingCount(peHandle, byref(count))
-#         minimum = c_double()
-#         maximum = c_double()
-#         gratingrangestatus = pe_GetGratingWavelengthRange(peHandle, gindex, byref(minimum), byref(maximum))
-#         extended_min = c_double()
-#         extended_max = c_double()
-#         extendedstatus = pe_GetGratingWavelengthExtendedRange(peHandle, gindex, byref(extended_min), byref(extended_max))
-#         minimum = minimum.value
-#         maximum = maximum.value
-#         extended_min = extended_min.value
-#         extended_max = extended_max.value
-#         return gindex, minimum, maximum, extended_min, extended_max, gratingnamestatus, gratingcountstatus, gratingrangestatus, extendedstatus
-# 
-#     def NKT_CalibrateGrating(self, peHandle, gratingIndex, wavelength):
-#         """
-#         Calibrates the central wavelength of the grating.
-# 
-#         Inputs:
-#             peHandle (required) - Handle retrieved from NKT_Open
-#             gratingIndex (required) - Position of the grating. Retrieved from NKT_GratingStatus
-#             wavelength (required) - Desired central wavelength in nm
-# 
-#         """
-#         library = self.library
-# 
-#         #Sets central wavelength filtered by system in nanometers
-#         pe_SetWavelengthOnGrating = library.PE_SetWavelengthOnGrating
-#         pe_SetWavelengthOnGrating.argtypes = [PE_HANDLE, c_int, c_double]
-#         pe_SetWavelengthOnGrating.restype = PE_STATUS
-# 
-#         pe_GetGratingWavelengthRange = library.PE_GetGratingWavelengthRange
-#         pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
-#         pe_GetGratingWavelengthRange.restype = PE_STATUS
-# 
-#         gratingcalibstatus = pe_SetWavelengthOnGrating(peHandle, gratingIndex, wavelength)
-#         minimum = c_double()
-#         maximum = c_double()
-#         gratingrangestatus_n = pe_GetGratingWavelengthRange(peHandle, gratingIndex, byref(minimum), byref(maximum))
-#         minimum_n = minimum.value
-#         maximum_n = maximum.value
-#         return minimum_n, maximum_n, gratingcalibstatus, gratingrangestatus_n
-# 
-# =============================================================================
+    def NKT_GratingStatus(self, peHandle):
+        """
+        Retrieves information about the grating specified by the index.
+        
+        Inputs:
+            peHandle (required) - Handle retrieved from NKT_Open
 
+        """
+        library = self.library
+
+        #Retrieves grating
+        pe_GetGrating = library.PE_GetGrating
+        pe_GetGrating.argtypes = [PE_HANDLE, POINTER(c_int)]
+        pe_GetGrating.restype = PE_STATUS
+
+        #Retrieves grating name
+        pe_GetGratingName = library.PE_GetGratingName
+        pe_GetGratingName.argtypes = [CPE_HANDLE, c_int, POINTER(c_char), c_int]
+        pe_GetGratingName.restype = PE_STATUS
+
+        #Retrieves system's grating count number
+        pe_GetGratingCount = library.PE_getGratingCount
+        pe_GetGratingCount.argtypes = [CPE_HANDLE, POINTER(c_int)]
+        pe_GetGratingCount.restype = PE_STATUS
+
+        gratingIndex = c_int()
+        getgratingstatus = pe_GetGrating(peHandle, byref(gratingIndex))
+        gindex = gratingIndex.value
+        name = c_char()
+        #size = ??
+        gratingnamestatus = pe_GetGratingName(peHandle, gindex, byref(name), size)
+        gname = name.value
+        count = c_int()
+        gratingcountstatus = pe_GetGratingCount(peHandle, byref(count))
+        gcount = count.value
+        return gindex, gname, gcount, gratingnamestatus, gratingcountstatus
+    
+    def NKT_GetGratingWave(self, peHandle, gratingIndex):
+        """
+        Returns wavelength range and extended wavelength range on the grating.
+
+        """
+        #Retrieve wavelength range of grating in nanometers
+        pe_GetGratingWavelengthRange = library.PE_GetGratingWavelengthRange
+        pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
+        pe_GetGratingWavelengthRange.restype = PE_STATUS
+
+        #Retrieve extended wavelength range of grating in nanometers
+        pe_GetGratingWavelengthExtendedRange = library.PE_GetGratingWavelengthExtendedRange
+        pe_GetGratingWavelengthExtendedRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
+        pe_GetGratingWavelengthExtendedRange.restype = PE_STATUS
+        
+        minimum = c_double()
+        maximum = c_double()
+        gratingrangestatus = pe_GetGratingWavelengthRange(peHandle, gratingindex, byref(minimum), byref(maximum))
+        extended_min = c_double()
+        extended_max = c_double()
+        extendedstatus = pe_GetGratingWavelengthExtendedRange(peHandle, gratingindex, byref(extended_min), byref(extended_max))
+        minimum = minimum.value
+        maximum = maximum.value
+        extended_min = extended_min.value
+        extended_max = extended_max.value
+        return minimum, maximum, extended_min, extended_max, gratingrangestatus, extendedstatus
+    
+    def NKT_SetGratingWave(self, peHandle, gratingIndex, wavelength):
+        """
+        Calibrates the central wavelength of the grating.
+
+        Inputs:
+            peHandle (required) - Handle retrieved from NKT_Open
+            gratingIndex (required) - Position of the grating. Retrieved from NKT_GratingStatus
+            wavelength (required) - Desired central wavelength in nm
+
+        """
+        library = self.library
+
+        #Sets central wavelength filtered by system in nanometers
+        pe_SetWavelengthOnGrating = library.PE_SetWavelengthOnGrating
+        pe_SetWavelengthOnGrating.argtypes = [PE_HANDLE, c_int, c_double]
+        pe_SetWavelengthOnGrating.restype = PE_STATUS
+
+        gratingcalibstatus = pe_SetWavelengthOnGrating(peHandle, gratingIndex, wavelength)
+        return gratingcalibstatus
+
+    def NKT_HarmonicFilter(self, peHandle):
+        """
+        Retrieves availability of harmonic filter accessory and its status.
+        
+        Inputs:
+            peHandle (required) - Handle retrieved from NKT_Open
+       
+        """
+        library = self.library
+        
+        #Retrieves availability of harmonic filter accessory.
+        pe_HasHarmonicFilter = library.PE_HasHarmonicFilter
+        pe_HasHarmonicFilter.argtypes = [CPE_HANDLE]
+        pe_HasHarmonicFilter.restype = c_int
+        
+        #Retrieves status of harmonic filter accessory.
+        pe_GetHarmonicFilterEnabled = library.pe_GetHarmonicFilterEnabled
+        pe_GetHarmonicFilterEnabled.argtypes = [CPE_HANDLE, POINTER(c_int)]
+        pe_HasHarmonicFilter.restype = PE_STATUS
+        
+        harmon_avail = pe_HasHarmonicFilter(peHandle)
+        enable = c_int()
+        harmon_status = pe_GetHarmonicFilterEnabled(peHandle, byref(enable))
+        enable = enable.value
+        return harmon_avail, enable, harmon_status
+    
+    def NKT_EnableHarmonicFilter(self, peHandle, enable):
+        """
+        Sets status of harmonic filter accessory.
+
+        Inputs:
+            peHandle (required) - Handle retrieved from NKT_Open
+            enable - State of harmonic filter. 0 is disabled.
+        """
+        library = self.library
+        
+        pe_SetHarmonicFilterEnabled = library.PE_SetHarmonicFilterEnabled
+        pe_SetHarmonicFilterEnabled.argtypes = [PE_HANDLE, c_int]
+        pe_SetHarmonicFilterEnabled.restype = PE_STATUS
+        
+        status = pe_SetHarmonicFilterEnabled(peHandle, enable)
+        return status
