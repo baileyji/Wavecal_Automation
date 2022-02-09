@@ -1,7 +1,7 @@
 """
 The classes PE_STATUS, PE_HANDLE, and CPE_HANDLE are for converting c objects into
     in the LLTF .dll file.
-NKTContrast converts c functions into python.
+LLTFContrast converts c functions into python.
 
 """
 from ctypes import *
@@ -50,7 +50,7 @@ class CPE_HANDLE:
     def __init__(self, c_void_p):
         self._as_parameter_ = c_void_p
 
-class NKTContrast():
+class LLTFContrast():
     """
     This class performs various functions in the NKT Photon instrument.
 
@@ -64,12 +64,20 @@ class NKTContrast():
             raise Exception
         self.library = CDLL(lib_path)
 
-    def NKT_Open(self, conffile, index=0):
+    def LLTF_Open(self, conffile, index=0):
         """
         Creates and opens communication channel with system.
+        
+        Inputs:
+            conffile (Required) - Path to configuration file.
+                Usually in 'C:\Program Files (x86)\Photon etc\PHySpecV2\system.xml'
+            index (Optional, int) - Position of system.
         Returns:
-            peHandle - 
-
+            peHandle (PE_HANDLE) - Handle to system.
+            name (char) - String defining uniquely a system.
+            create_status (PE_STATUS) - Returns PE_SUCCESS or error code for system creation status.
+            name_status (PE_STATUS) - Returns PE_SUCCESS or error code for name retrieval status.
+            open_status (PE_STATUS) - Returns PE_SUCCESS or error code for system opening status.
         """
         library = self.library
 
@@ -97,16 +105,17 @@ class NKTContrast():
         name_status = pe_GetSystemName(peHandle, index, byref(name), sizeof(name))
         name = name.value
         open_status = pe_Open(peHandle, name.value)
-        return peHandle, name, create_status, open_status
+        return peHandle, name, create_status, name_status, open_status
 
-    def NKT_Close(self, peHandle):
+    def LLTF_Close(self, peHandle):
         """
         Closes communication channel with system.
-        Returns status of system closing and destruction.
 
         Inputs:
-            peHandle (required) - Handle retrieved from NKT_Open
-
+            peHandle (required, PE_HANDLE) - Handle retrieved from NKT_Open
+        Returns:
+            closestatus (PE_STATUS) - Returns PE_SUCCESS or error code for system closing status.
+            destroystatus (PE_STATUS) - Returns PE_SUCCESS or error code for system destruction status.
         """
         library = self.library
 
@@ -124,15 +133,15 @@ class NKTContrast():
         destroystatus = pe_Destroy(peHandle)
         return closestatus, destroystatus
     
-    def NKT_StatusStr(self, pestatuscode):
+    def LLTF_StatusStr(self, pestatuscode):
         """
         Retrieves explanation for a given status code.
-        Returns a string explaining the given status code.
 
         Inputs:
-            pestatuscode (Required) - A status code like PE_SUCCESS or PE_INVALID_HANDLE
-            Should be in form PE_STATUS.PE_ERRORCODE
-
+            pestatuscode (Required, PE_STATUS) - A status code like PE_SUCCESS or PE_INVALID_HANDLE
+                Should be in form PE_STATUS.PE_ERRORCODE
+        Returns:
+            statusstring (constant char) - Description of given status code.
         """
         library = self.library
 
@@ -143,10 +152,12 @@ class NKTContrast():
         statusstring = pe_GetStatusStr(pestatuscode)
         return statusstring
     
-    def NKT_LibraryVersion(self):
+    def LLTF_LibraryVersion(self):
         """
         Retrieves library version number.
 
+        Returns:
+            library_vers (int) - Library version number.
         """
         library = self.library
         
@@ -157,10 +168,14 @@ class NKTContrast():
         library_vers = pe_LibraryVersion()
         return library_vers
     
-    def NKT_GetSystemCount(self, peHandle):
+    def LLTF_GetSystemCount(self, peHandle):
         """
         Retrieves number of systems, connected or not.
 
+        Inputs:
+            peHandle (required, CPE_HANDLE) - Handle retrieved from NKT_Open
+        Returns:
+            count (int) - Number of systems
         """
         library = self.library
         
@@ -172,14 +187,18 @@ class NKTContrast():
         count = pe_GetSystemCount(peHandle)
         return count
         
-    def NKT_GetWavelength(self, peHandle):
+    def LLTF_GetWavelength(self, peHandle):
         """
-        Returns the central wavelength, wavelength range,
-            and status of retrieval of both.
+        Returns the central wavelength and wavelength range.
 
         Inputs:
-            peHandle (required) - Handle retrieved from NKT_Open
-
+            peHandle (required, CPE_HANDLE) - Handle retrieved from NKT_Open
+        Returns:
+            wavelength_n (double) - Central wavelength (nm)
+            minimum_n (double) - Minimum available wavelength (nm)
+            maximum_n (double) - Maximum available wavelength
+            getwavestatus (PE_STATUS) - Returns PE_SUCCESS or error code for wavelength retrieval status.
+            getrangestatus (PE_STATUS) - Returns PE_SUCCESS or error code for range retrieval status.
         """
         library = self.library
 
@@ -203,16 +222,15 @@ class NKTContrast():
         maximum_n = maximum.value
         return wavelength_n, minimum_n, maximum_n, getwavestatus, getrangestatus
 
-    def NKT_SetWavelength(self, peHandle, wavelength):
+    def LLTF_SetWavelength(self, peHandle, wavelength):
         """
-        Calibrates the instrument.
-        Returns the newly calibrated central wavelength and the status of 
-            calibration and wavelength retrieval.
+        Sets central wavelength filtered by system.
 
         Inputs:
-            peHandle (required) - Handle retrieved from NKT_Open
-            wavelength (required) - Desired central wavelength to be filtered by system (nm)
-
+            peHandle (required, PE_HANDLE) - Handle retrieved from NKT_Open
+            wavelength (required, double) - Desired central wavelength to be filtered by system (nm)
+        Returns:
+            setwavestatus (PE_STATUS) - Returns PE_SUCCESS or error code for setting wavelength status.
         """
         library = self.library
 
@@ -229,13 +247,19 @@ class NKTContrast():
         setwavestatus = pe_SetWavelength(peHandle, wavelength)
         return setwavestatus
 
-    def NKT_GratingStatus(self, peHandle):
+    def LLTF_GratingStatus(self, peHandle):
         """
         Retrieves information about the grating specified by the index.
         
         Inputs:
-            peHandle (required) - Handle retrieved from NKT_Open
-
+            peHandle (required, PE_HANDLE) - Handle retrieved from NKT_Open
+        Returns:
+            gindex (int) - Position of grating
+            gname (char) - Grating name
+            gcount (int) - Grating number
+            getgratingstatus (PE_STATUS) - Returns PE_SUCCESS or error code for grating retrieval status.
+            gratingnamestatus (PE_STATUS) - Returns PE_SUCCESS or error code for name retrieval status.
+            gratingcountstatus (PE_STATUS) - Returns PE_SUCCESS or error code for grating number retrieval status.
         """
         library = self.library
 
@@ -264,12 +288,22 @@ class NKTContrast():
         count = c_int()
         gratingcountstatus = pe_GetGratingCount(peHandle, byref(count))
         gcount = count.value
-        return gindex, gname, gcount, gratingnamestatus, gratingcountstatus
+        return gindex, gname, gcount, getgratingstatus, gratingnamestatus, gratingcountstatus
     
-    def NKT_GetGratingWave(self, peHandle, gratingIndex):
+    def LLTF_GetGratingWave(self, peHandle, gratingIndex):
         """
         Returns wavelength range and extended wavelength range on the grating.
 
+        Inputs:
+            peHandle (required, CPE_HANDLE) - Handle retrieved from NKT_Open
+            gratingIndex (required, int) - Position of the grating. Retrieved from NKT_GratingStatus
+        Returns:
+            minimum (double) - Minimum available wavelength (in nm)
+            maximum (double) - Maximum available wavelength
+            extended_min (double) - Minimum extended wavelength (in nm)
+            extended_max (double) - Maximum extended wavelength
+            gratingrangestatus (PE_STATUS) - Returns PE_SUCCESS or error code for range retrieval status.
+            extendedstatus (PE_STATUS) - Returns PE_SUCCESS or error code for extended range retrieval status.
         """
         #Retrieve wavelength range of grating in nanometers
         pe_GetGratingWavelengthRange = library.PE_GetGratingWavelengthRange
@@ -293,15 +327,16 @@ class NKTContrast():
         extended_max = extended_max.value
         return minimum, maximum, extended_min, extended_max, gratingrangestatus, extendedstatus
     
-    def NKT_SetGratingWave(self, peHandle, gratingIndex, wavelength):
+    def LLTF_SetGratingWave(self, peHandle, gratingIndex, wavelength):
         """
         Calibrates the central wavelength of the grating.
 
         Inputs:
-            peHandle (required) - Handle retrieved from NKT_Open
-            gratingIndex (required) - Position of the grating. Retrieved from NKT_GratingStatus
-            wavelength (required) - Desired central wavelength in nm
-
+            peHandle (required, PE_HANDLE) - Handle retrieved from NKT_Open
+            gratingIndex (required, int) - Position of the grating. Retrieved from NKT_GratingStatus
+            wavelength (required, double) - Desired central wavelength in nm
+        Returns:
+            gratingcalibstatus (PE_STATUS) - Returns PE_SUCCESS or error code for setting wavelength status.
         """
         library = self.library
 
@@ -313,13 +348,16 @@ class NKTContrast():
         gratingcalibstatus = pe_SetWavelengthOnGrating(peHandle, gratingIndex, wavelength)
         return gratingcalibstatus
 
-    def NKT_HarmonicFilter(self, peHandle):
+    def LLTF_HarmonicFilter(self, peHandle):
         """
         Retrieves availability of harmonic filter accessory and its status.
         
         Inputs:
-            peHandle (required) - Handle retrieved from NKT_Open
-       
+            peHandle (required, CPE_HANDLE) - Handle retrieved from NKT_Open
+        Returns:
+            harmon_avail (int) - Returns non-zero value if available. If unavailable, 0.
+            enable (int) - State of harmonic filter. 0 is disabled.
+            harmon_status (PE_STATUS) - Returns PE_SUCCESS or error code for harmonic filter status retrieval status.
         """
         library = self.library
         
@@ -339,13 +377,15 @@ class NKTContrast():
         enable = enable.value
         return harmon_avail, enable, harmon_status
     
-    def NKT_EnableHarmonicFilter(self, peHandle, enable):
+    def LLTF_EnableHarmonicFilter(self, peHandle, enable):
         """
         Sets status of harmonic filter accessory.
 
         Inputs:
-            peHandle (required) - Handle retrieved from NKT_Open
-            enable - State of harmonic filter. 0 is disabled.
+            peHandle (required, PE_HANDLE) - Handle retrieved from NKT_Open
+            enable (required, int) - State of harmonic filter. 0 is disabled.
+        Returns:
+            status (PE_STATUS) - Returns PE_SUCCESS or error code for setting status.
         """
         library = self.library
         
