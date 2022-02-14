@@ -1,49 +1,57 @@
 from enum import IntEnum
 from ctypes import *
+print(cdll.msvcrt)
+libc = cdll.msvcrt
 
 # =============================================================================
 # printf = libc.printf
 # printf(b"Hello, %s\n",  b"World!")
 # printf(b'Hello World!')
-# 
+# =============================================================================
+
+# =============================================================================
 # #Test argtypes
 # strlen = libc.strlen
 # strlen.argtypes = [c_char_p]
 # string = b'Hello World!'
 # #s = string.encode('ASCII')
 # print(strlen(string))
-# 
 # =============================================================================
-#Test restypes
 # =============================================================================
+# #Test restypes
 # atol = libc.atol
 # atol.argtypes = [c_char_p]
 # atol.restype = c_long
-# a_number = b'20000000000000000000'
+# a_number = b'200000000.34'
 # num_res = atol(a_number)
-# python_num = int(a_number)
-# print('Number (C): ', num_res, '\n',
-#       'Number (Python):', python_num)
+# #python_num = int(a_number)
+# print('Number (C): ', num_res)
+# print(type(num_res))
 # =============================================================================
 # =============================================================================
 # atof = libc.atof
 # atof.argtypes = [c_char_p]
-# #atof.restype = c_double
+# atof.restype = c_double
 # a_number = b'123.45'
 # num = atof(a_number)
 # python_res = float(a_number)
 # print('Number (c):', num, '\n',
 #       'Number (Python):', python_res)
+# print(type(num))
+# print(type(python_res))
 # =============================================================================
-# =============================================================================
-# strchr = libc.strchr
-# strchr.argtypes = [c_char_p, c_int]
-# strchr.restype = c_char_p
-# string = b'Hello, World!'
-# ch = ord('o')
-# print(strchr(string, ch))
-# =============================================================================
-
+strchr = libc.strchr
+strchr.argtypes = [c_char_p, c_int]
+strchr.restype = c_char_p
+string = b'Hello, World!'
+ch = ord('o')
+new_string = strchr(string, ch)
+new_chr = ord('r')
+newnew = strchr(new_string, new_chr)
+print('First:', new_string, '\n',
+      'Second:', newnew)
+print('type of first:', type(new_string), '\n',
+      'type of second:', type(newnew))
 #Test out params
 # =============================================================================
 # strcpy = libc.strcpy
