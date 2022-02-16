@@ -111,7 +111,6 @@ class LLTF:
             if create_status != PE_STATUS.PE_SUCCESS:
                 raise LLTFError('Could not create connection to LLTF.')
             peHandle = peHandle_i.value
-            
             #Retrieve system name
             name_i = c_char()
             name_status = pe_GetSystemName(peHandle, index, 
@@ -119,12 +118,10 @@ class LLTF:
             if name_status != PE_STATUS.PE_SUCCESS:
                 raise LLTFError('Could not retrieve LLTF name.')
             name = name_i.value
-            
             #Open connection to system
             open_status = pe_Open(peHandle, name)
             if open_status != PE_STATUS.PE_SUCCESS:
                 raise LLTFError('Could not open connection to LLTF.')
-                
             self._handle = peHandle
             return self._handle, name
         else:
@@ -158,13 +155,11 @@ class LLTF:
             #Close connection
             closestatus = pe_Close(peHandle)
             if closestatus != PE_STATUS.PE_SUCCESS:
-                getLogger().debug('Could not close system.')
-                raise LLTFError('DisconnectionError')
+                raise LLTFError('Could not close system.')
             #Destroy connection
             destroystatus = pe_Destroy(peHandle)
             if destroystatus != PE_STATUS.PE_SUCCESS:
-                getLogger().debug('Could not destroy system.')
-                raise LLTFError('DisconnectionError')
+                raise LLTFError('Could not destroy system.')
             self._handle = None
         else:
             getLogger().debug('Already closed.')
@@ -177,22 +172,22 @@ class LLTF:
         Called directly by client.
         
         Parameters
-            conffile (bytes) - Path to configuration file.
+            conffile (string) - Path to configuration file.
                 Usually in 'C:\Program Files (x86)\Photon etc\PHySpecV2\system.xml'
                 
         Returns
             status - Dictionary containing status of the filter.
                 Includes:
-                      Library version (int)
-                      System name (string)
-                      Number of possible systems (int)
-                      Central wavelength (int)
-                      Wavelength range (int)
-                      Grating index (int)
-                      Grating name (string)
-                      Grating count (int)
-                      Availability of harmonic filter (int) - 0 if unavailable
-                      Status of harmonic filter (int) - 0 if unavailable
+                      Library version (integer)
+                      System name (bytes)
+                      Number of possible systems (integer)
+                      Central wavelength (float)
+                      Wavelength range (float)
+                      Grating index (integer)
+                      Grating name (bytes)
+                      Grating count (integer)
+                      Availability of harmonic filter (integer) - 0 if unavailable
+                      Status of harmonic filter (integer) - 0 if unavailable
                       
         """
         close = False
@@ -232,7 +227,7 @@ class LLTF:
         Returns newly calibrated wavelength.
 
         Parameters
-            conffile (bytes) - Path to configuration file.
+            conffile (string) - Path to configuration file.
                 Usually in 'C:\Program Files (x86)\Photon etc\PHySpecV2\system.xml'
             wavelength (float) - Desired central wavelength in nm
             
@@ -272,7 +267,7 @@ class LLTF:
         Called by status.
         
         Returns
-            library_vers (int) - Library version number
+            library_vers (integer) - Library version number
             
         """
         library = self._library
@@ -293,7 +288,7 @@ class LLTF:
         Parameters
             peHandle - Handle to system
         Returns
-            count (int) - Number of systems listed in config file
+            count (integer) - Number of systems listed in config file
             
         """
         library = self._library
@@ -402,18 +397,15 @@ class LLTF:
         gratingIndex = c_int()
         getgratingstatus = pe_GetGrating(peHandle, byref(gratingIndex))
         gindex = gratingIndex.value
-        
         #Retrieve grating name
         name = c_char()
         gratingnamestatus = pe_GetGratingName(peHandle, gindex, 
                                               byref(name), sizeof(name))
         gname = name.value
-        
         #Retrieve grating count
         count = c_int()
         gratingcountstatus = pe_GetGratingCount(peHandle, byref(count))
         gcount = count.value
-        
         #Check for errors
         if getgratingstatus or gratingnamestatus or gratingcountstatus != PE_STATUS.PE_SUCCESS:
             raise LLTFError('Could not retrieve grating.')
