@@ -7,7 +7,7 @@ from ctypes import *
 from sys import platform
 from enum import IntEnum
 
-class LLTFError(Exception):
+class LLTFError(IOError):
     pass
 
 class PE_STATUS(IntEnum):
@@ -32,7 +32,7 @@ class PE_STATUS(IntEnum):
 
     @classmethod
     def from_param(cls, obj):
-        if not is_instance(obj, PE_STATUS):
+        if not isinstance(obj, PE_STATUS):
             raise TypeError('Not a PE_STATUS instance.')
         return int(obj)
 
@@ -54,10 +54,10 @@ class CPE_HANDLE:
 
 class LLTF:
     """
-
     Hardware class for connection to the LLTF High Contrast filter.
 
     """
+    
 
     def __init__(self, conffile):
         #Check platform
@@ -66,17 +66,18 @@ class LLTF:
         elif platform.startswith('win32'):
             lib_path = './win32/PE_Filter_SDK.dll'
         else:
-            raise LLTFError('Could not find library.')
+            raise IOError('Platform not supported.')
             
-        self._conffile = conffile
+        self.conffile = conffile
         self._library = CDLL(lib_path)
         self._handle = None
+        self.name = ''
+        
 
     def _open(self, index=0):
         """
-
-        Creates and opens connection with the system. 
-        Called by status and get_wave.
+        Creates and opens connection with the system.
+        If handle is already available, it tests the handle before use.
 
         Parameters
             index (integer) - Position of the system. Default is zero.
@@ -85,91 +86,81 @@ class LLTF:
             name (bytes) - System name
             
         """
-        library = self._library
-
-        #Acquire handle on LLTF Contrast
-        pe_Create = library.PE_Create
+        pe_Create = self._library.PE_Create
         pe_Create.argtypes = [c_char_p, POINTER(PE_HANDLE)]
         pe_Create.restype = PE_STATUS
 
-        #Retrieves system name
-        pe_GetSystemName = library.PE_GetSystemName
+        pe_GetSystemName = self._library.PE_GetSystemName
         pe_GetSystemName.argtypes = [CPE_HANDLE, c_int, POINTER(c_char), c_int]
         pe_GetSystemName.restype = PE_STATUS
         
-        #Open communication channel
-        pe_Open = library.PE_Open
+        pe_Open = self._library.PE_Open
         pe_Open.argtypes = [PE_HANDLE, c_char_p]
         pe_Open.restype = PE_STATUS
         
         if self._handle is None:
             #Create system connection
-            conffile = self._conffile
-            conffile = conffile.encode('ASCII')
+            conffile = self.conffile.encode('ASCII')
             peHandle_i = PE_HANDLE()
             create_status = pe_Create(conffile, byref(peHandle_i))
             if create_status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not create connection to LLTF.')
-            peHandle = peHandle_i.value
+                raise LLTFError('Could not create connection to LLTF:', str(create_status))
+            self._handle = peHandle_i.value
             #Retrieve system name
             name_i = c_char()
-            name_status = pe_GetSystemName(peHandle, index, 
+            name_status = pe_GetSystemName(self._handle, index, 
                                            byref(name_i), sizeof(name_i))
             if name_status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not retrieve LLTF name.')
-            name = name_i.value
+                raise LLTFError('Could not retrieve LLTF name:', str(name_status))
+            self.name = str(name_i.value)
             #Open connection to system
-            open_status = pe_Open(peHandle, name)
+            open_status = pe_Open(self._handle, self.name)
             if open_status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not open connection to LLTF.')
-            self._handle = peHandle
-            return self._handle, name
+                raise LLTFError('Could not open connection to LLTF:', str(open_status))
         else:
-            getLogger().debug('Already open.')
-            pass
+            name_status = pe_GetSystemName(self._handle, index, 
+                                           byref(name_i), sizeof(name_i))
+            self.name = str(name_i.value)
+            if name_status == PE_STATUS.PE_INVALID_HANDLE:
+                self._handle = None
+                raise ValueError('Invalid handle:', str(name_status))
+            elif name_status == PE_STATUS.PE_SUCCESS:
+                getLogger(__name__).debug('Already open.')
+        
         
     def _close(self):
         """
-
-        Closes connection with system. '
-        Called by status and get_wave.
+        Closes connection with system.
 
         Parameters
             peHandle (PE_HANDLE) - Handle to system. 
 
         """
-        library = self._library
-
-        #Close communication channel
-        pe_Close = library.PE_Close
+        pe_Close = self._library.PE_Close
         pe_Close.argtypes = [PE_HANDLE]
         pe_Close.restype = PE_STATUS
 
-        #Destroys filter resource created with PE_Create
-        pe_Destroy = library.PE_Destroy
+        pe_Destroy = self._library.PE_Destroy
         pe_Destroy.argtypes = [PE_HANDLE]
         pe_Destroy.restype = PE_STATUS
 
         if self._handle is not None:
-            peHandle = self._handle
             #Close connection
-            closestatus = pe_Close(peHandle)
+            closestatus = pe_Close(self._handle)
             if closestatus != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not close system.')
+                raise LLTFError('Could not close system:', str(closestatus))
             #Destroy connection
-            destroystatus = pe_Destroy(peHandle)
+            destroystatus = pe_Destroy(self._handle)
             if destroystatus != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not destroy system.')
+                raise LLTFError('Could not destroy system:', str(destroystatus))
             self._handle = None
         else:
-            getLogger().debug('Already closed.')
-            pass
+            getLogger(__name__).debug('Already closed.')
+        
         
     def status(self):
         """
-        
         Returns status of filter as a dictionary. 
-        Called directly by client.
         
         Parameters
             conffile (string) - Path to configuration file.
@@ -179,52 +170,43 @@ class LLTF:
             status - Dictionary containing status of the filter.
                 Includes:
                       Library version (integer)
-                      System name (bytes)
+                      System name (string)
                       Number of possible systems (integer)
                       Central wavelength (float)
                       Wavelength range (float)
-                      Grating index (integer)
-                      Grating name (bytes)
-                      Grating count (integer)
-                      Availability of harmonic filter (integer) - 0 if unavailable
-                      Status of harmonic filter (integer) - 0 if unavailable
+                      Grating index (integer), name (string), 
+                          count (integer), range (float), extended range (float)
+                      Availability and status of harmonic filter (string)
                       
         """
-        close = False
         try:
-            self._handle, name = self._open()
-            library_vers = self.library_version()
-            count = self.system_count()
-            wave = self.get_wave()
-            minimum, maximum = self.get_range()
-            gindex, gname, gcount = self.grating()
-            havail, henable = self.harmonic_filter()
-            status = {'system_name': name,
+            self._open()
+            library_vers = self._library_version()
+            count = self._system_count()
+            wave = self._get_wave()
+            minimum, maximum = self._get_range()
+            gindex, gname, gcount = self._grating()
+            gmin, gmax, gextmin, gestmax = self._grating_wave(gindex)
+            havail, henable = self._harmonic_filter()
+            return {'system_name': self.name,
                       'library_version': library_vers,
                       'system_count': count,
                       'central_wavelength': wave, 
-                      'range_minimum': minimum,
-                      'range_maximum': maximum,
-                      'grating_index': gindex,
-                      'grating_name': gname,
-                      'grating_count': gcount,
-                      'harmonic_filter_availability': havail,
-                      'harmonic_filter_status': henable
-                      }
-            return True, status
-        except:
-            close = True
+                      'range': (minimum, maximum),
+                      'grating': {'index':gindex, 'name':gname, 'count':gcount, 
+                                  'range': (gmin, gmax), 'extended_range': (gextmin, gextmax)},
+                      'harmonic_filter': 'Unavailable' if havail==0 else 
+                      ('Available', 'Disabled' if henable==0 else 'Enabled')}
+        except Exception as e:
+            raise e
         finally:
-            if close:
-                self._close()
-        return False
-    
+            self._close()
+       
+        
     def set_wave(self, wavelength):
         """
 
         Sets central wavelength of the filter. 
-        Called directly by client.
-        Returns newly calibrated wavelength.
 
         Parameters
             conffile (string) - Path to configuration file.
@@ -232,265 +214,210 @@ class LLTF:
             wavelength (float) - Desired central wavelength in nm
             
         """
-        library = self._library
-
-        #Sets central wavelength filtered by system in nanometers
-        pe_SetWavelength = library.PE_SetWavelength
+        pe_SetWavelength = self._library.PE_SetWavelength
         pe_SetWavelength.argtypes = [PE_HANDLE, c_double]
         pe_SetWavelength.restype = PE_STATUS
 
-        close = False
         try:
-            self._handle, name = self._open()
-            peHandle = self._handle
+            self._open()
             #Set wavelength
-            status = pe_SetWavelength(peHandle, wavelength)
+            status = pe_SetWavelength(self._handle, wavelength)
             if status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not set wavelength.')
+                raise LLTFError('Could not set wavelength:', str(status))
             #Retrieve new wavelength
-            new_wave = self.get_wave()
+            new_wave = self._get_wave()
             if new_wave != wavelength:
-                raise LLTFError('Calibration could not occur.')
-            else:
-                return True
-        except:
-            close = True
+                raise ValueError("Retrieved wavelength doesn't reflect set wavelength.")
+        except Exception as e:
+            raise e
         finally:
-            if close:
-                self._close()
-        return False
+            self._close()
     
-    def library_version(self):
+    
+    def _library_version(self):
         """
-    
         Return version number of library. 
-        Called by status.
         
         Returns
             library_vers (integer) - Library version number
             
         """
-        library = self._library
-            
-        #Retrieves version number of library
-        pe_LibraryVersion = library.PE_GetLibraryVersion
+        pe_LibraryVersion = self._library.PE_GetLibraryVersion
         pe_LibraryVersion.restype = c_int
     
         library_vers = pe_LibraryVersion()
         return library_vers
 
-    def system_count(self):
+
+    def _system_count(self):
         """
-        
         Retrieves the number of systems, connected or not. 
-        Called by status.
         
-        Parameters
-            peHandle - Handle to system
         Returns
             count (integer) - Number of systems listed in config file
             
         """
-        library = self._library
-        peHandle = self._handle
-        
-        #Retrieves number of systems available in config file
-        pe_GetSystemCount = library.PE_GetSystemCount
+        pe_GetSystemCount = self._library.PE_GetSystemCount
         pe_GetSystemCount.argtypes = [CPE_HANDLE]
         pe_GetSystemCount.restype = c_int
         
-        count = pe_GetSystemCount(peHandle)
+        count = pe_GetSystemCount(self._handle)
         return count
     
-    def get_wave(self):
-        """
     
+    def _get_wave(self):
+        """
         Retrieves central wavelength filtered by system in nm. 
-        Called by _status and set_wave.
 
-        Parameters
-            peHandle - Handle to system 
         Returns
             wavelength (float) - Central wavelength filtered by system (nm)
             
         """
-        library = self._library
-        peHandle = self._handle
-
-        #Returns the central wavelength filtered by the system in nanometers
-        pe_GetWavelength = library.PE_GetWavelength
+        pe_GetWavelength = self._library.PE_GetWavelength
         pe_GetWavelength.argtypes = [CPE_HANDLE, POINTER(c_double)]
         pe_GetWavelength.restype = PE_STATUS
         
         wavelength_i = c_double()
-        status = pe_GetWavelength(peHandle, byref(wavelength_i))
+        status = pe_GetWavelength(self._handle, byref(wavelength_i))
         wavelength = wavelength_i.value
-        if status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not retrieve wavelength.')
+        if status == PE_STATUS.PE_INVALID_WAVELENGTH:
+            raise LLTFError('Wavelength out of range:', str(status))
+        elif status != PE_STATUS.PE_SUCCESS and PE_STATUS.PE_INVALID_WAVELENGTH:
+            raise LLTFError('Could not retrieve wavelength:', str(status))
         return wavelength
     
-    def get_range(self):
+    
+    def _get_range(self):
         """
-        
         Retrieves wavelength range filtered by system in nm. 
-        Called by _status and set_wave.
         
-        Parameters
-            peHandle - Handle to system
         Returns
             minimum (float) - Range minimum
             maximum (float) - Range maximum
             
         """
-        library = self._library
-        peHandle = self._handle
-        
-        #Retrieves wavelength range of system in nanometers
-        pe_GetWavelengthRange = library.PE_GetWavelengthRange
+        pe_GetWavelengthRange = self._library.PE_GetWavelengthRange
         pe_GetWavelengthRange.argtypes = [CPE_HANDLE, 
                                           POINTER(c_double), POINTER(c_double)]
         pe_GetWavelengthRange.restype = PE_STATUS
         
         minimum_i = c_double()
         maximum_i = c_double()
-        status = pe_GetWavelengthRange(peHandle, 
+        status = pe_GetWavelengthRange(self._handle, 
                                        byref(minimum_i), byref(maximum_i))
         minimum = minimum_i.value
         maximum = maximum_i.value
         if status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not retrieve wavelength range.')
+                raise LLTFError('Could not retrieve wavelength range:', str(status))
         return minimum, maximum
     
-    def grating(self):
+    
+    def _grating(self):
         """
-
         Retrieves LLTF grating info. 
-        Called by status.
         
-        Parameters
-            peHandle - Connection handle
         Returns
             gindex (integer)- Grating index
-            gname (bytes) - Grating name
+            gname (string) - Grating name
             gcount (integer) - Grating number
 
         """
-        library = self._library
-        peHandle = self._handle
-
-        #Retrieves grating
-        pe_GetGrating = library.PE_GetGrating
+        pe_GetGrating = self._library.PE_GetGrating
         pe_GetGrating.argtypes = [PE_HANDLE, POINTER(c_int)]
         pe_GetGrating.restype = PE_STATUS
 
-        #Retrieves grating name
-        pe_GetGratingName = library.PE_GetGratingName
+        pe_GetGratingName = self._library.PE_GetGratingName
         pe_GetGratingName.argtypes = [CPE_HANDLE, c_int, POINTER(c_char), c_int]
         pe_GetGratingName.restype = PE_STATUS
 
-        #Retrieves system's grating count number
-        pe_GetGratingCount = library.PE_getGratingCount
+        pe_GetGratingCount = self._library.PE_getGratingCount
         pe_GetGratingCount.argtypes = [CPE_HANDLE, POINTER(c_int)]
         pe_GetGratingCount.restype = PE_STATUS
         
         #Retrieve grating
         gratingIndex = c_int()
-        getgratingstatus = pe_GetGrating(peHandle, byref(gratingIndex))
+        getgratingstatus = pe_GetGrating(self._handle, byref(gratingIndex))
+        if getgratingstatus != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not retrieve grating:', str(getgratingstatus))
         gindex = gratingIndex.value
         #Retrieve grating name
         name = c_char()
-        gratingnamestatus = pe_GetGratingName(peHandle, gindex, 
+        gratingnamestatus = pe_GetGratingName(self._handle, gindex, 
                                               byref(name), sizeof(name))
-        gname = name.value
+        if gratingnamestatus != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not retrieve grating name:', str(gratingnamestatus))
+        gname = str(name.value)
         #Retrieve grating count
         count = c_int()
-        gratingcountstatus = pe_GetGratingCount(peHandle, byref(count))
-        gcount = count.value
-        #Check for errors
-        if getgratingstatus or gratingnamestatus or gratingcountstatus != PE_STATUS.PE_SUCCESS:
-            raise LLTFError('Could not retrieve grating.')
+        gratingcountstatus = pe_GetGratingCount(self._handle, byref(count))
+        if gratingcountstatus != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not retrieve grating count:', str(gratingcountstatus))
+        gcount = count.value    
         return gindex, gname, gcount
 
-        
-    def harmonic_filter(self):
+         
+    def _grating_wave(self, gratingIndex):
         """
+        Returns wavelength range and extended wavelength range on the grating.
         
-        Checks availability and status of harmonic filter. 
-        Called by status.
+        Inputs:
+            gratingIndex (integer) - Position of the grating. Retrieved from NKT_GratingStatus
+        Returns:
+            minimum (float) - Minimum available wavelength (in nm)
+            maximum (float) - Maximum available wavelength
+            extended_min (float) - Minimum extended wavelength (in nm)
+            extended_max (float) - Maximum extended wavelength
+     
+        """
+        pe_GetGratingWavelengthRange = self._library.PE_GetGratingWavelengthRange
+        pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
+        pe_GetGratingWavelengthRange.restype = PE_STATUS
 
-        Parameters
-            peHandle - Connection handle
+        pe_GetGratingWavelengthExtendedRange = self._library.PE_GetGratingWavelengthExtendedRange
+        pe_GetGratingWavelengthExtendedRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
+        pe_GetGratingWavelengthExtendedRange.restype = PE_STATUS
+        
+        minimum_i = c_double()
+        maximum_i = c_double()
+        rangestatus = pe_GetGratingWavelengthRange(self._handle, gratingindex, 
+                                                   byref(minimum_i), byref(maximum_i))
+        if rangestatus != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not return grating wavelength range:', str(rangestatus))
+        extended_min_i = c_double()
+        extended_max_i = c_double()
+        extendedstatus = pe_GetGratingWavelengthExtendedRange(self._handle, gratingindex, 
+                                                              byref(extended_min_i), byref(extended_max_i))
+        if extendedstatus != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not return grating wavelength extended range:', str(extendedstatus))
+        minimum = minimum_i.value
+        maximum = maximum_i.value
+        extended_min = extended_min_i.value
+        extended_max = extended_max_i.value
+        return minimum, maximum, extended_min, extended_max
+    
+    
+    def _harmonic_filter(self):
+        """
+        Checks availability and status of harmonic filter. 
+
         Returns
             avail (integer) - Availability of harmonic filter. 0 if unavailable.
             enable (integer) - Status of harmonic filter. 0 if disabled.
             
         """
-        library = self._library
-        peHandle = self._handle
-        
-        #Retrieves availability of harmonic filter accessory.
-        pe_HasHarmonicFilter = library.PE_HasHarmonicFilter
+        pe_HasHarmonicFilter = self._library.PE_HasHarmonicFilter
         pe_HasHarmonicFilter.argtypes = [CPE_HANDLE]
         pe_HasHarmonicFilter.restype = c_int
         
-        #Retrieves status of harmonic filter accessory.
-        pe_GetHarmonicFilterEnabled = library.pe_GetHarmonicFilterEnabled
+        pe_GetHarmonicFilterEnabled = self._library.pe_GetHarmonicFilterEnabled
         pe_GetHarmonicFilterEnabled.argtypes = [CPE_HANDLE, POINTER(c_int)]
         pe_HasHarmonicFilter.restype = PE_STATUS
         
-        avail = pe_HasHarmonicFilter(peHandle)
+        avail = pe_HasHarmonicFilter(self._handle)
         enable_i = c_int()
-        status = pe_GetHarmonicFilterEnabled(peHandle, byref(enable_i))
+        status = pe_GetHarmonicFilterEnabled(self._handle, byref(enable_i))
         enable = enable_i.value
         if status != PE_STATUS.PE_SUCCESS:
-            raise LLTFError('Could not find harmonic filter status.')
+            raise LLTFError('Could not find harmonic filter status:', str(status))
         return avail, enable
     
-# =============================================================================
-#     def grating_wave(self, gratingIndex):
-#         """
-#        
-#         Returns wavelength range and extended wavelength range on the grating.
-#         Currently not called by any functions.
-#         
-#         Inputs:
-#             peHandle - Handle retrieved from NKT_Open
-#             gratingIndex (integer) - Position of the grating. Retrieved from NKT_GratingStatus
-#         Returns:
-#             minimum (float) - Minimum available wavelength (in nm)
-#             maximum (float) - Maximum available wavelength
-#             extended_min (float) - Minimum extended wavelength (in nm)
-#             extended_max (float) - Maximum extended wavelength
-#      
-#         """
-#         library = self._library
-#         peHandle = self._handle
-#         
-#         #Retrieve wavelength range of grating in nanometers
-#         pe_GetGratingWavelengthRange = library.PE_GetGratingWavelengthRange
-#         pe_GetGratingWavelengthRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
-#         pe_GetGratingWavelengthRange.restype = PE_STATUS
-# 
-#         #Retrieve extended wavelength range of grating in nanometers
-#         pe_GetGratingWavelengthExtendedRange = library.PE_GetGratingWavelengthExtendedRange
-#         pe_GetGratingWavelengthExtendedRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
-#         pe_GetGratingWavelengthExtendedRange.restype = PE_STATUS
-#         
-#         minimum = c_double()
-#         maximum = c_double()
-#         rangestatus = pe_GetGratingWavelengthRange(peHandle, gratingindex, 
-#                                                    byref(minimum), byref(maximum))
-#         if rangestatus != PE_STATUS.PE_SUCCESS:
-#             raise LLTFError('Could not return grating wavelength range.')
-#         extended_min = c_double()
-#         extended_max = c_double()
-#         extendedstatus = pe_GetGratingWavelengthExtendedRange(peHandle, gratingindex, 
-#                                                               byref(extended_min), byref(extended_max))
-#         if extendedstatus != PE_STATUS.PE_SUCCESS:
-#             raise LLTFError('Could not return grating wavelength extended range.')
-#         minimum_n = minimum.value
-#         maximum_n = maximum.value
-#         extended_min_n = extended_min.value
-#         extended_max_n = extended_max.value
-#         return minimum_n, maximum_n, extended_min_n, extended_max_n
-# =============================================================================
