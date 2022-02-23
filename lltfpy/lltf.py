@@ -220,14 +220,20 @@ class LLTF:
 
         try:
             self._open()
-            #Set wavelength
-            status = pe_SetWavelength(self._handle, wavelength)
-            if status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not set wavelength:', str(status))
-            #Retrieve new wavelength
-            new_wave = self._get_wave()
-            if new_wave != wavelength:
-                raise ValueError("Retrieved wavelength doesn't reflect set wavelength.")
+            check_wave = self._get_wave()
+            if check_wave == wavelength:
+                getLogger(__name__).debug('Wavelength already set:', check_wave, 'nm')
+            else:
+                #Set wavelength
+                status = pe_SetWavelength(self._handle, wavelength)
+                if status == PE_STATUS.PE_INVALID_WAVELENGTH:
+                    raise LLTFError('Wavelength out of range:', str(status))
+                elif status != PE_STATUS.PE_SUCCESS:
+                    raise LLTFError('Could not set wavelength:', str(status))
+                #Retrieve new wavelength
+                new_wave = self._get_wave()
+                if new_wave != wavelength:
+                    raise ValueError("Retrieved wavelength doesn't reflect set wavelength.")
         except Exception as e:
             raise e
         finally:
@@ -280,9 +286,7 @@ class LLTF:
         wavelength_i = c_double()
         status = pe_GetWavelength(self._handle, byref(wavelength_i))
         wavelength = wavelength_i.value
-        if status == PE_STATUS.PE_INVALID_WAVELENGTH:
-            raise LLTFError('Wavelength out of range:', str(status))
-        elif status != PE_STATUS.PE_SUCCESS and PE_STATUS.PE_INVALID_WAVELENGTH:
+        if status != PE_STATUS.PE_SUCCESS:
             raise LLTFError('Could not retrieve wavelength:', str(status))
         return wavelength
     
