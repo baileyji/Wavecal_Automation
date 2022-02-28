@@ -26,7 +26,7 @@ class Test(unittest.TestCase):
         
     def handle_is_open(self):
         """
-        Tests that system is closed if left open for a while.
+        Tests that system is closed if left open without closing.
         
         """
         self.lltf._open()
@@ -89,7 +89,7 @@ class Test(unittest.TestCase):
         message = 'Wavelength already set:', wavelength, 'nm'
         with self.assertLogs() as captured:
             self.lltf.set_wave(wavelength=wavelength)
-        self.assertEqual(captured.records[1].getMessage(), message)
+        self.assertEqual(captured.records[0].getMessage(), message)
 
 
     def wave_out_of_range(self):
