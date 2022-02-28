@@ -98,36 +98,27 @@ class LLTF:
         pe_Open.argtypes = [PE_HANDLE, c_char_p]
         pe_Open.restype = PE_STATUS
         
-        if self._handle is None:
-            #Create system connection
-            conffile = self.conffile.encode('ASCII')
-            peHandle_i = PE_HANDLE()
-            create_status = pe_Create(conffile, byref(peHandle_i))
-            if create_status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not create connection to LLTF:', str(create_status))
-            self._handle = peHandle_i.value
-            #Retrieve system name
-            name_i = c_char()
-            name_status = pe_GetSystemName(self._handle, index, 
-                                           byref(name_i), sizeof(name_i))
-            if name_status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not retrieve LLTF name:', str(name_status))
-            self.name = str(name_i.value)
-            #Open connection to system
-            open_status = pe_Open(self._handle, self.name)
-            if open_status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not open connection to LLTF:', str(open_status))
-        else:
-            name_status = pe_GetSystemName(self._handle, index, 
-                                           byref(name_i), sizeof(name_i))
-            self.name = str(name_i.value)
-            if name_status == PE_STATUS.PE_INVALID_HANDLE:
-                self._handle = None
-                raise ValueError('Invalid handle:', str(name_status))
-            elif name_status == PE_STATUS.PE_SUCCESS:
-                getLogger(__name__).debug('Already open.')
-        
-        
+        if self._handle is not None:
+            self._close()
+        #Create system connection
+        conffile = self.conffile.encode('ASCII')
+        peHandle_i = PE_HANDLE()
+        create_status = pe_Create(conffile, byref(peHandle_i))
+        if create_status != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not create connection to LLTF:', str(create_status))
+        self._handle = peHandle_i.value
+        #Retrieve system name
+        name_i = c_char()
+        name_status = pe_GetSystemName(self._handle, index, 
+                                       byref(name_i), sizeof(name_i))
+        if name_status != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not retrieve LLTF name:', str(name_status))
+        self.name = str(name_i.value)
+        #Open connection to system
+        open_status = pe_Open(self._handle, self.name)
+        if open_status != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not open connection to LLTF:', str(open_status))
+            
     def _close(self):
         """
         Closes connection with system.
@@ -147,7 +138,10 @@ class LLTF:
         if self._handle is not None:
             #Close connection
             closestatus = pe_Close(self._handle)
-            if closestatus != PE_STATUS.PE_SUCCESS:
+            if closestatus == PE_STATUS.PE_INVALID_HANDLE:
+                self._handle = None
+                raise ValueError('Invalid handle:', str(closestatus))
+            elif closestatus != PE_STATUS.PE_SUCCESS:
                 raise LLTFError('Could not close system:', str(closestatus))
             #Destroy connection
             destroystatus = pe_Destroy(self._handle)
@@ -227,7 +221,7 @@ class LLTF:
                 #Set wavelength
                 status = pe_SetWavelength(self._handle, wavelength)
                 if status == PE_STATUS.PE_INVALID_WAVELENGTH:
-                    raise LLTFError('Wavelength out of range:', str(status))
+                    raise ValueError('Invalid input wavelength:', str(status))
                 elif status != PE_STATUS.PE_SUCCESS:
                     raise LLTFError('Could not set wavelength:', str(status))
                 #Retrieve new wavelength
@@ -381,6 +375,8 @@ class LLTF:
         pe_GetGratingWavelengthExtendedRange.argtypes = [CPE_HANDLE, c_int, POINTER(c_double), POINTER(c_double)]
         pe_GetGratingWavelengthExtendedRange.restype = PE_STATUS
         
+        if gratingIndex == None:
+            raise ValueError('Grating index not found.')
         minimum_i = c_double()
         maximum_i = c_double()
         rangestatus = pe_GetGratingWavelengthRange(self._handle, gratingindex, 
