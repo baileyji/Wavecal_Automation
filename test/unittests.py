@@ -1,5 +1,5 @@
 import unittest
-from .lltf import LLTF, PE_STATUS
+from ..lltfpy.lltf import LLTF, PE_STATUS
 
 
 class Test(unittest.TestCase):
@@ -52,8 +52,10 @@ class Test(unittest.TestCase):
         """
         #Make an invalid handle
         self.lltf.handle = 0
-        self.lltf._open()
+        with self.assertRaises(ValueError) as context:
+            self.lltf._open()
         self.assertFalse(self.lltf.handle)
+        self.assertEqual(str(context.exception), 'Invalid handle: PE_STATUS.PE_INVALID_HANDLE')
         
         
     def close_with_no_handle(self):
@@ -61,7 +63,7 @@ class Test(unittest.TestCase):
         Tests that proper logging message is retrieved upon closing with no handle.
 
         """
-        with self.assertLogs() as captured:
+        with self.assertLogs(level='DEBUG') as captured:
             self.lltf._close()
         self.assertEqual(captured.records[0].getMessage(), 'Already closed.')
     
@@ -87,7 +89,7 @@ class Test(unittest.TestCase):
         status = self.lltf.status()
         wavelength = status['central_wavelength']
         message = 'Wavelength already set:', wavelength, 'nm'
-        with self.assertLogs() as captured:
+        with self.assertLogs(level='DEBUG') as captured:
             self.lltf.set_wave(wavelength=wavelength)
         self.assertEqual(captured.records[0].getMessage(), message)
 
@@ -100,7 +102,7 @@ class Test(unittest.TestCase):
         wavelength = 100
         with self.assertRaises(ValueError) as context:
             self.lltf.set_wave(wavelength=wavelength)
-        self.assertEqual(str(context.exception), 'Wavelength out of range: PE_STATUS.PE_INVALID_WAVELENGTH')
+        self.assertEqual(str(context.exception), 'Invalid input wavelength: PE_STATUS.PE_INVALID_WAVELENGTH')
     
     
     def wave_correctly_set(self):
@@ -124,3 +126,6 @@ class Test(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             self.lltf._grating_wave(gratingIndex=gratingIndex)
         self.assertEqual(str(context.exception), 'Grating index not found.')
+        
+if __name__ == '__main__':
+    unittest.main()
