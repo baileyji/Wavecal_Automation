@@ -51,7 +51,7 @@ class Test(unittest.TestCase):
        
         """
         #Make an invalid handle
-        self.lltf.handle = 0
+        self.lltf.handle = 'HANDLE'
         with self.assertRaises(ValueError) as context:
             self.lltf._open()
         self.assertFalse(self.lltf.handle)
@@ -124,7 +124,7 @@ class Test(unittest.TestCase):
         self.lltf._open()
         gratingIndex = None
         with self.assertRaises(ValueError) as context:
-            self.lltf._grating_wave(gratingIndex=gratingIndex)
+            minimum, maximum, extended_min, extended_max = self.lltf._grating_wave(gratingIndex=gratingIndex)
         self.assertEqual(str(context.exception), 'Grating index not found.')
         
 if __name__ == '__main__':
