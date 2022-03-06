@@ -1,5 +1,6 @@
 """
 This is the hardware class for access to the high contrast LLTF filter.
+
 """
 
 from logging import getLogger
@@ -7,8 +8,10 @@ from ctypes import *
 from sys import platform
 from enum import IntEnum
 
+
 class LLTFError(IOError):
     pass
+
 
 class PE_STATUS(IntEnum):
     """
@@ -36,6 +39,7 @@ class PE_STATUS(IntEnum):
             raise TypeError('Not a PE_STATUS instance.')
         return int(obj)
 
+
 class PE_HANDLE:
     """
     A c void pointer. PE_HANDLE structure where handle is stored
@@ -44,6 +48,7 @@ class PE_HANDLE:
     def __init__(self, c_void_p):
         self._as_parameter_ = c_void_p
 
+
 class CPE_HANDLE:
     """
     A c void constant pointer. Constant handle to system.
@@ -51,6 +56,7 @@ class CPE_HANDLE:
     """
     def __init__(self, c_void_p):
         self._as_parameter_ = c_void_p
+
 
 class LLTF:
     """
@@ -77,13 +83,10 @@ class LLTF:
     def _open(self, index=0):
         """
         Creates and opens connection with the system.
-        If handle is already available, it tests the handle before use.
+        If handle is already available, it closes the system and reopens.
 
         Parameters
             index (integer) - Position of the system. Default is zero.
-        Returns
-            self._handle (PE_HANDLE)- Connection handle
-            name (bytes) - System name
             
         """
         pe_Create = self._library.PE_Create
@@ -121,7 +124,8 @@ class LLTF:
             
     def _close(self):
         """
-        Closes connection with system.
+        Closes connection with system. 
+        If no handle avaliable, it notifies the user and passes.
 
         Parameters
             peHandle (PE_HANDLE) - Handle to system. 
@@ -180,17 +184,17 @@ class LLTF:
             wave = self._get_wave()
             minimum, maximum = self._get_range()
             gindex, gname, gcount = self._grating()
-            gmin, gmax, gextmin, gestmax = self._grating_wave(gindex)
+            gmin, gmax, gextmin, gextmax = self._grating_wave(gindex)
             havail, henable = self._harmonic_filter()
-            return {'system_name': self.name,
-                      'library_version': library_vers,
+            return {'library_version': library_vers,
+                      'system_name': self.name,
                       'system_count': count,
                       'central_wavelength': wave, 
                       'range': (minimum, maximum),
                       'grating': {'index':gindex, 'name':gname, 'count':gcount, 
                                   'range': (gmin, gmax), 'extended_range': (gextmin, gextmax)},
                       'harmonic_filter': 'Unavailable' if havail==0 else 
-                      ('Available', 'Disabled' if henable==0 else 'Enabled')}
+                          ('Available', 'Disabled' if henable==0 else 'Enabled')}
         except Exception as e:
             raise e
         finally:
@@ -199,8 +203,8 @@ class LLTF:
         
     def set_wave(self, wavelength):
         """
-
         Sets central wavelength of the filter. 
+        If desired wavelength is already set, it notifies the user and closes.
 
         Parameters
             conffile (string) - Path to configuration file.
