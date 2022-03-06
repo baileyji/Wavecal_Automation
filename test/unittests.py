@@ -1,3 +1,8 @@
+"""
+Unit tests for lltfpy/lltf.py.
+
+"""
+
 import unittest
 from ..lltfpy.lltf import LLTF, PE_STATUS
 
@@ -5,7 +10,9 @@ from ..lltfpy.lltf import LLTF, PE_STATUS
 class Test(unittest.TestCase):
     
     def __init__(self):
-        pass
+        self.conffile = ''
+        self.lltf = None
+
 
     def setUp(self):
         """
@@ -27,6 +34,7 @@ class Test(unittest.TestCase):
     def handle_is_open(self):
         """
         Tests that system is closed if left open without closing.
+        Asserts that handles retrieved after opening twice are not equal.
         
         """
         self.lltf._open()
@@ -39,7 +47,7 @@ class Test(unittest.TestCase):
     def handle_not_open(self):
         """
         Tests that handle is returned from LLTF._open() when self.handle = None.
-         
+        
         """
         self.lltf._open()
         self.assertTrue(self.lltf.handle)
@@ -48,6 +56,7 @@ class Test(unittest.TestCase):
     def invalid_handle(self):
         """
         Tests that handle is deleted if invalid.
+        Also asserts a ValueError is raised.
        
         """
         #Make an invalid handle
@@ -61,7 +70,7 @@ class Test(unittest.TestCase):
     def close_with_no_handle(self):
         """
         Tests that proper logging message is retrieved upon closing with no handle.
-
+    
         """
         with self.assertLogs(level='DEBUG') as captured:
             self.lltf._close()
@@ -82,7 +91,7 @@ class Test(unittest.TestCase):
         """
         https://pythonin1minute.com/how-to-test-logging-in-python/
         
-        Check that getLogger prints appropriate message when someone tries to input the 
+        Check that getLogger returns appropriate message when someone tries to input the 
             wavelength that is already set.
         
         """
@@ -91,12 +100,12 @@ class Test(unittest.TestCase):
         message = 'Wavelength already set:', wavelength, 'nm'
         with self.assertLogs(level='DEBUG') as captured:
             self.lltf.set_wave(wavelength=wavelength)
-        self.assertEqual(captured.records[0].getMessage(), message)
+        self.assertEqual(str(captured.records[0].getMessage()), str(message))
 
 
     def wave_out_of_range(self):
         """
-        Check that proper IOError is used when wavelength is out of range of the filter.
+        Check that proper ValueError is used when wavelength is out of range of the filter.
 
         """
         wavelength = 100
@@ -107,7 +116,7 @@ class Test(unittest.TestCase):
     
     def wave_correctly_set(self):
         """
-        Check that wavelength gets properly set.
+        Check that wavelength gets properly set by asserting that status returns the set wavelength.
         
         """
         wavelength = 600
@@ -118,7 +127,7 @@ class Test(unittest.TestCase):
     
     def grating_not_retrieved(self):
         """
-        Tests that proper error is raised if grating isn't retrieved.
+        Tests that proper ValueError is raised if grating isn't retrieved.
 
         """
         self.lltf._open()
@@ -126,6 +135,7 @@ class Test(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             minimum, maximum, extended_min, extended_max = self.lltf._grating_wave(gratingIndex=gratingIndex)
         self.assertEqual(str(context.exception), 'Grating index not found.')
+        
         
 if __name__ == '__main__':
     unittest.main()
