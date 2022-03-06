@@ -1,4 +1,4 @@
-#Wavecal_Automation
+# Wavecal_Automation
 
 A repository for connecting to the LLTF Instrument at the Subaru Observatory.
 
