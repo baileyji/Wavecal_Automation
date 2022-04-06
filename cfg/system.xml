@@ -1,0 +1,95 @@
+<Description>
+ <!-- ********** Filter ********** -->
+ <Component Type="Filter" Id="LLTF Contrast M000254109">
+  <Device>
+   <Sn>M000254109</Sn>
+   <FilterMotorId>0</FilterMotorId>
+   <HarmonicFilter>
+    <Gpio>0</Gpio>
+   </HarmonicFilter>
+  </Device>
+  <!-- Information on all existing gratings -->
+  <ManualGrating>0</ManualGrating>
+  <Grating>
+   <Mode>Transmission</Mode>
+   <Period>1760</Period>
+   <Range>
+    <RegLower>1000</RegLower>
+    <RegUpper>1700</RegUpper>
+    <ExtLower>1000</ExtLower>
+    <ExtUpper>1700</ExtUpper>
+   </Range>
+   <GeneralInfo>
+    <GratingName>[ 1000 ; 1700 ] nm</GratingName>
+    <StageOffset>121.463</StageOffset>
+    <FWHM>2</FWHM>
+    <BeamSide>Left</BeamSide>
+    <CalibStep>0.15</CalibStep>
+    <MinLinCorForCal>0.45</MinLinCorForCal>
+   </GeneralInfo>
+   <Calibration Type="Mfg">
+    <User>Photon Etc.</User>
+    <DateTime>20140313105621</DateTime>
+    <Temperature>0</Temperature>
+    <Offset>3.331682814292787</Offset>
+    <Factor>0.9975850787472861</Factor>
+    <FocalLength>199457</FocalLength>
+    <FocalLengthCoef>-4.14e-06</FocalLengthCoef>
+    <Slope>0.000801973</Slope>
+    <Curve>-1.76662e-05</Curve>
+   </Calibration>
+   <Calibration Type="Current">
+    <User>Photon Etc.</User>
+    <DateTime>20140313105621</DateTime>
+    <Temperature>0</Temperature>
+    <Offset>3.331682814292787</Offset>
+    <Factor>0.9975850787472861</Factor>
+    <FocalLength>199457</FocalLength>
+    <FocalLengthCoef>-4.14e-06</FocalLengthCoef>
+    <Slope>0.000801973</Slope>
+    <Curve>-1.76662e-05</Curve>
+   </Calibration>
+  </Grating>
+  <Grating>
+   <Mode>Transmission</Mode>
+   <Period>2600</Period>
+   <Range>
+    <RegLower>1700</RegLower>
+    <RegUpper>2400</RegUpper>
+    <ExtLower>1700</ExtLower>
+    <ExtUpper>2400</ExtUpper>
+   </Range>
+   <GeneralInfo>
+    <GratingName>[ 1700 ; 2400 ] nm</GratingName>
+    <StageOffset>-128.1195</StageOffset>
+    <FWHM>2</FWHM>
+    <BeamSide>Right</BeamSide>
+    <CalibStep>0.15</CalibStep>
+    <MinLinCorForCal>0.45</MinLinCorForCal>
+    <HasHarmonic>1</HasHarmonic>
+   </GeneralInfo>
+   <Calibration Type="Mfg">
+    <User>Photon Etc.</User>
+    <DateTime>20140311162857</DateTime>
+    <Temperature>0</Temperature>
+    <Offset>2.976489842190048</Offset>
+    <Factor>1.001502299057825</Factor>
+    <FocalLength>199457</FocalLength>
+    <FocalLengthCoef>-4.14e-06</FocalLengthCoef>
+    <Slope>0.000801973</Slope>
+    <Curve>-1.76662e-05</Curve>
+   </Calibration>
+   <Calibration Type="Current">
+    <User>Photon Etc.</User>
+    <DateTime>20140311162857</DateTime>
+    <Temperature>0</Temperature>
+    <Offset>2.976489842190048</Offset>
+    <Factor>1.001502299057825</Factor>
+    <FocalLength>199457</FocalLength>
+    <FocalLengthCoef>-4.14e-06</FocalLengthCoef>
+    <Slope>0.000801973</Slope>
+    <Curve>-1.76662e-05</Curve>
+   </Calibration>
+  </Grating>
+ </Component>
+</Description>
