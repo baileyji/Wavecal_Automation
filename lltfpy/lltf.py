@@ -14,14 +14,14 @@ ERROR_CODES = {0: 'Success',
                2: 'Communication with system failed.',
                3: 'Configuration file is missing.',
                4: 'Configuration file is corrupted.',
-               5: 'Requested wavelength is out of bound.',
-               6: 'Nor harmonic filter present in the system configuration.',
+               5: 'Requested wavelength is out of bounds.',
+               6: 'No harmonic filter present in the system configuration.',
                7: 'Requested filter does not match any available.',
                8: 'An unknown status code has been returned by the system.',
                9: 'Requested grating does not match any available.',
                10: 'Output buffer has a NULL value.',
                11: 'Output buffer size is too small to receive the value.',
-               12: ' The system configuration is not supported by this SDK.',
+               12: 'The system configuration is not supported by this SDK.',
                13: 'No filter connected.'}
 
 
@@ -54,6 +54,7 @@ class PE_STATUS(IntEnum):
         if not isinstance(obj, PE_STATUS):
             raise TypeError('Not a PE_STATUS instance.')
         return int(obj)
+
 
 class LLTF:
     """
@@ -218,9 +219,9 @@ class LLTF:
                 #Set wavelength
                 status = pe_SetWavelength(self._handle, wavelength)
                 if status == PE_STATUS.PE_INVALID_WAVELENGTH:
-                    raise ValueError('Invalid input wavelength:'+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
+                    raise ValueError('Invalid input wavelength:' + ERROR_CODES.get(open_status.value, 'Unknown Error'))
                 elif status != PE_STATUS.PE_SUCCESS:
-                    raise LLTFError('Could not set wavelength:'+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
+                    raise LLTFError('Could not set wavelength:' + ERROR_CODES.get(open_status.value, 'Unknown Error'))
                 #Retrieve new wavelength
                 new_wave = self._get_wave()
                 if new_wave != wavelength:
@@ -277,7 +278,7 @@ class LLTF:
         wavelength_i = c_double()
         status = pe_GetWavelength(self._handle, byref(wavelength_i))
         if status != PE_STATUS.PE_SUCCESS:
-            wavelength = 'Could not retrieve wavelength:'+ ERROR_CODES.get(open_status.value, 'Unknown Error')
+            wavelength = 'Could not retrieve wavelength:' + ERROR_CODES.get(open_status.value, 'Unknown Error')
         else:
             wavelength = wavelength_i.value
         return wavelength
@@ -302,7 +303,7 @@ class LLTF:
         status = pe_GetWavelengthRange(self._handle,
                                        byref(minimum_i), byref(maximum_i))
         if status != PE_STATUS.PE_SUCCESS:
-                minimum = 'Could not retrieve wavelength range:'+ ERROR_CODES.get(open_status.value, 'Unknown Error')
+                minimum = 'Could not retrieve wavelength range:' + ERROR_CODES.get(open_status.value, 'Unknown Error')
                 maximum = minimum
         else:
             minimum = minimum_i.value
@@ -395,7 +396,7 @@ class LLTF:
         extendedstatus = pe_GetGratingWavelengthExtendedRange(self._handle, gratingindex,
                                                               byref(extended_min_i), byref(extended_max_i))
         if extendedstatus != PE_STATUS.PE_SUCCESS:
-            extended_min = 'Could not return grating wavelength extended range:' + ERROR_CODES.get(open_status.value, 'Unknown Error'))
+            extended_min = 'Could not return grating wavelength extended range:' + ERROR_CODES.get(open_status.value, 'Unknown Error')
             extended_max = extended_min
         else:
             extended_min = extended_min_i.value
