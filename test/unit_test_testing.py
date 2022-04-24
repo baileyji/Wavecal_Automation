@@ -1,7 +1,7 @@
 from enum import IntEnum
 from ctypes import *
 import unittest
-
+from logging import getLogger
     
 class NewClass():
     def __init__(self):
@@ -40,6 +40,10 @@ class NewClass():
     
     def Errors(self):
         raise ValueError('False!')
+        
+    def Logger(self):
+        getLogger(__name__).debug('Hello world')
+
 
 class Test(unittest.TestCase):
         
@@ -86,6 +90,14 @@ class Test(unittest.TestCase):
             self.someClass.Errors()
         self.assertEqual(str(context.exception), 'False!')
     
-    
+    def testLogger(self):
+        """
+        Tests that logs are recorded correctly.
+        
+        """
+        with self.assertLogs(level='DEBUG') as captured:
+            self.someClass.Logger()
+        self.assertEqual(str(captured.records[0].getMessage()), 'Hello world')
+
 if __name__ == '__main__':
     unittest.main()        
