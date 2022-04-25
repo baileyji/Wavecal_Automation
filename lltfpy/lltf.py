@@ -339,7 +339,7 @@ class LLTF:
 
         #Retrieve grating
         gratingIndex = c_int()
-        getgratingstatus = pe_GetGrating(self._handle, byref(gratingIndex))
+        getgrating_status = pe_GetGrating(self._handle, byref(gratingIndex))
         if getgrating_status != PE_STATUS.PE_SUCCESS:
             gindex = 'Could not retrieve grating: ' + ERROR_CODES.get(getgrating_status.value, 'Unknown Error')
         else:
