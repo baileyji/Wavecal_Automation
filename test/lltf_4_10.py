@@ -14,14 +14,14 @@ ERROR_CODES = {0: 'Success',
                2: 'Communication with system failed.',
                3: 'Configuration file is missing.',
                4: 'Configuration file is corrupted.',
-               5: 'Requested wavelength is out of bounds.',
-               6: 'No harmonic filter present in the system configuration.',
+               5: 'Requested wavelength is out of bound.',
+               6: 'Nor harmonic filter present in the system configuration.',
                7: 'Requested filter does not match any available.',
                8: 'An unknown status code has been returned by the system.',
                9: 'Requested grating does not match any available.',
                10: 'Output buffer has a NULL value.',
                11: 'Output buffer size is too small to receive the value.',
-               12: 'The system configuration is not supported by this SDK.',
+               12: ' The system configuration is not supported by this SDK.',
                13: 'No filter connected.'}
 
 
@@ -55,7 +55,6 @@ class PE_STATUS(IntEnum):
             raise TypeError('Not a PE_STATUS instance.')
         return int(obj)
 
-
 class LLTF:
     """
     Hardware class for connection to the LLTF High Contrast filter.
@@ -64,7 +63,7 @@ class LLTF:
 
 
     def __init__(self, conffile):
-        #Check platform. dll files will be added to repo in future.
+        #Check platform
         if platform.startswith('win64'):
             lib_path = './win64/PE_Filter_SDK.dll'
         elif platform.startswith('win32'):
@@ -105,18 +104,19 @@ class LLTF:
         self._handle = c_void_p() #PE_HANDLE()
         create_status = pe_Create(self.conffile.encode('ASCII'), byref(self._handle))
         if create_status != PE_STATUS.PE_SUCCESS:
-            raise LLTFError('Could not create connection to LLTF: ' + ERROR_CODES.get(create_status.value, 'Unknown Error'))
+            raise LLTFError('Could not create connection to LLTF: ' + ERROR_CODES.get(open_status.value, 'Unknown Error'))
         #Retrieve system name
         name_i = c_buffer(80)
         name_status = pe_GetSystemName(self._handle, index, name_i, sizeof(name_i))
         if name_status != PE_STATUS.PE_SUCCESS:
-            raise LLTFError('Could not retrieve LLTF name: ' + ERROR_CODES.get(name_status.value, 'Unknown Error'))
-        self.name = str(name_i.value)
+            raise LLTFError('Could not retrieve LLTF name: ' + ERROR_CODES.get(open_status.value, 'Unknown Error'))
+        self.name = name_i.value
         #Open connection to system
         open_status = pe_Open(self._handle, name_i)
         # NB returns 2 if device is open by the software
         if open_status != PE_STATUS.PE_SUCCESS:
-            raise LLTFError('Opening LLTF failed: '+ERROR_CODES.get(open_status.value, 'Unknown Error'))
+            raise LLTFError('Opening LLTF failed: '+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
+
     def _close(self):
         """
         Closes connection with system.
@@ -133,16 +133,16 @@ class LLTF:
 
         if self._handle is not None:
             #Close connection
-            close_status = pe_Close(self._handle)
-            if close_status == PE_STATUS.PE_INVALID_HANDLE:
+            closestatus = pe_Close(self._handle)
+            if closestatus == PE_STATUS.PE_INVALID_HANDLE:
                 self._handle = None
-                raise LLTFError('Invalid handle destroyed:' + ERROR_CODES.get(close_status.value, 'Unknown Error'))
-            elif close_status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not close system: ' + ERROR_CODES.get(close_status.value, 'Unknown Error'))
+                raise ValueError('Invalid handle:' + ERROR_CODES.get(open_status.value, 'Unknown Error'))
+            elif closestatus != PE_STATUS.PE_SUCCESS:
+                raise LLTFError('Could not close system:'+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
             #Destroy connection
-            destroy_status = pe_Destroy(self._handle)
-            if destroy_status != PE_STATUS.PE_SUCCESS:
-                raise LLTFError('Could not destroy system: ' + ERROR_CODES.get(destroy_status.value, 'Unknown Error'))
+            destroystatus = pe_Destroy(self._handle)
+            if destroystatus != PE_STATUS.PE_SUCCESS:
+                raise LLTFError('Could not destroy system:'+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
             self._handle = None
         else:
             getLogger(__name__).debug('Already closed.')
@@ -164,11 +164,9 @@ class LLTF:
                       Number of possible systems (integer)
                       Central wavelength (float)
                       Wavelength range (float)
-                      Grating info (dictionary) : {Grating index (integer), name (string),
-                          count (integer), range (float), extended range (float)}
+                      Grating index (integer), name (string),
+                          count (integer), range (float), extended range (float)
                       Availability and status of harmonic filter (string)
-If any error occurs, the corresponding dictionary value will be replaced with an
-                error code (string).
 
         """
         try:
@@ -199,7 +197,6 @@ If any error occurs, the corresponding dictionary value will be replaced with an
         """
         Sets central wavelength of the filter.
         If desired wavelength is already set, it notifies the user and closes.
-        Closes system if error incurred.
 
         Parameters
             conffile (string) - Path to configuration file.
@@ -218,15 +215,15 @@ If any error occurs, the corresponding dictionary value will be replaced with an
                 getLogger(__name__).debug('Wavelength already set:', check_wave, 'nm')
             else:
                 #Set wavelength
-                setwave_status = pe_SetWavelength(self._handle, wavelength)
-                if setwave_status == PE_STATUS.PE_INVALID_WAVELENGTH:
-                    raise ValueError('Invalid input wavelength: ' + ERROR_CODES.get(setwave_status.value, 'Unknown Error'))
-                elif setwave_status != PE_STATUS.PE_SUCCESS:
-                    raise LLTFError('Could not set wavelength: ' + ERROR_CODES.get(setwave_status.value, 'Unknown Error'))
+                status = pe_SetWavelength(self._handle, wavelength)
+                if status == PE_STATUS.PE_INVALID_WAVELENGTH:
+                    raise ValueError('Invalid input wavelength:'+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
+                elif status != PE_STATUS.PE_SUCCESS:
+                    raise LLTFError('Could not set wavelength:'+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
                 #Retrieve new wavelength
                 new_wave = self._get_wave()
                 if new_wave != wavelength:
-                    raise LLTFError("Retrieved wavelength doesn't reflect set wavelength.")
+                    raise ValueError("Retrieved wavelength doesn't reflect set wavelength.")
         except Exception as e:
             raise e
         finally:
@@ -235,9 +232,11 @@ If any error occurs, the corresponding dictionary value will be replaced with an
 
     def _library_version(self):
         """
-        Returns version number of library.
+        Return version number of library.
+
         Returns
             library_vers (integer) - Library version number
+
         """
         pe_LibraryVersion = self._library.PE_GetLibraryVersion
         pe_LibraryVersion.restype = c_int
@@ -275,11 +274,10 @@ If any error occurs, the corresponding dictionary value will be replaced with an
         pe_GetWavelength.restype = PE_STATUS
 
         wavelength_i = c_double()
-        getwave_status = pe_GetWavelength(self._handle, byref(wavelength_i))
-        if getwave_status != PE_STATUS.PE_SUCCESS:
-            wavelength = 'Could not retrieve wavelength: ' + ERROR_CODES.get(getwave_status.value, 'Unknown Error')
-        else:
-            wavelength = wavelength_i.value
+        status = pe_GetWavelength(self._handle, byref(wavelength_i))
+        wavelength = wavelength_i.value
+        if status != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not retrieve wavelength:'+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
         return wavelength
 
 
@@ -301,12 +299,10 @@ If any error occurs, the corresponding dictionary value will be replaced with an
         maximum_i = c_double()
         status = pe_GetWavelengthRange(self._handle,
                                        byref(minimum_i), byref(maximum_i))
+        minimum = minimum_i.value
+        maximum = maximum_i.value
         if status != PE_STATUS.PE_SUCCESS:
-                minimum = 'Could not retrieve wavelength range: ' + ERROR_CODES.get(status.value, 'Unknown Error')
-                maximum = minimum
-        else:
-            minimum = minimum_i.value
-            maximum = maximum_i.value
+                raise LLTFError('Could not retrieve wavelength range:'+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
         return minimum, maximum
 
 
@@ -334,26 +330,23 @@ If any error occurs, the corresponding dictionary value will be replaced with an
 
         #Retrieve grating
         gratingIndex = c_int()
-        getgrating_status = pe_GetGrating(self._handle, byref(gratingIndex))
-        if getgrating_status != PE_STATUS.PE_SUCCESS:
-            gindex = 'Could not retrieve grating: ' + ERROR_CODES.get(getgrating_status.value, 'Unknown Error')
-        else:
-            gindex = gratingIndex.value
+        getgratingstatus = pe_GetGrating(self._handle, byref(gratingIndex))
+        if getgratingstatus != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not retrieve grating:'+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
+        gindex = gratingIndex.value
         #Retrieve grating name
         name = c_buffer(80)
-        gratingname_status = pe_GetGratingName(self._handle, gindex,
+        gratingnamestatus = pe_GetGratingName(self._handle, gindex,
                                               name, sizeof(name))
-        if gratingname_status != PE_STATUS.PE_SUCCESS:
-            gname = 'Could not retrieve grating name: ' + ERROR_CODES.get(gratingname_status.value, 'Unknown Error')
-        else:
-            gname = str(name.value)
+        if gratingnamestatus != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not retrieve grating name:' + ERROR_CODES.get(open_status.value, 'Unknown Error'))
+        gname = str(name.value)
         #Retrieve grating count
         count = c_int()
-        gratingcount_status = pe_GetGratingCount(self._handle, byref(count))
-        if gratingcount_status != PE_STATUS.PE_SUCCESS:
-            gcount = 'Could not retrieve grating count: ' + ERROR_CODES.get(gratingcount_status.value, 'Unknown Error')
-        else:
-            gcount = count.value
+        gratingcountstatus = pe_GetGratingCount(self._handle, byref(count))
+        if gratingcountstatus != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not retrieve grating count:'+ ERROR_CODES.get(open_status.value, 'Unknown Error'))
+        gcount = count.value
         return gindex, gname, gcount
 
 
@@ -382,24 +375,20 @@ If any error occurs, the corresponding dictionary value will be replaced with an
             raise ValueError('Grating index not found.')
         minimum_i = c_double()
         maximum_i = c_double()
-        gratingrange_status = pe_GetGratingWavelengthRange(self._handle, gratingindex,
+        rangestatus = pe_GetGratingWavelengthRange(self._handle, gratingindex,
                                                    byref(minimum_i), byref(maximum_i))
-        if gratingrange_status != PE_STATUS.PE_SUCCESS:
-            minimum = 'Could not return grating wavelength range: ' + ERROR_CODES.get(gratingrange_status.value, 'Unknown Error')
-            maximum = minimum
-        else:
-            minimum = minimum_i.value
-            maximum = maximum_i.value
+        if rangestatus != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not return grating wavelength range:' + ERROR_CODES.get(open_status.value, 'Unknown Error'))
         extended_min_i = c_double()
         extended_max_i = c_double()
-        extendedgratingrange_status = pe_GetGratingWavelengthExtendedRange(self._handle, gratingindex,
+        extendedstatus = pe_GetGratingWavelengthExtendedRange(self._handle, gratingindex,
                                                               byref(extended_min_i), byref(extended_max_i))
-        if extendedgratingrange_status != PE_STATUS.PE_SUCCESS:
-            extended_min = 'Could not return grating wavelength extended range: ' + ERROR_CODES.get(extendedgratingrange_status.value, 'Unknown Error')
-            extended_max = extended_min
-        else:
-            extended_min = extended_min_i.value
-            extended_max = extended_max_i.value
+        if extendedstatus != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not return grating wavelength extended range:' + ERROR_CODES.get(open_status.value, 'Unknown Error'))
+        minimum = minimum_i.value
+        maximum = maximum_i.value
+        extended_min = extended_min_i.value
+        extended_max = extended_max_i.value
         return minimum, maximum, extended_min, extended_max
 
 
@@ -422,9 +411,8 @@ If any error occurs, the corresponding dictionary value will be replaced with an
 
         avail = pe_HasHarmonicFilter(self._handle)
         enable_i = c_int()
-        harmonic_status = pe_GetHarmonicFilterEnabled(self._handle, byref(enable_i))
-        if harmonic_status != PE_STATUS.PE_SUCCESS:
-            enable = 'Could not find harmonic filter status: ' + ERROR_CODES.get(harmonic_status.value, 'Unknown Error')
-        else:
-            enable = enable_i.value
+        status = pe_GetHarmonicFilterEnabled(self._handle, byref(enable_i))
+        enable = enable_i.value
+        if status != PE_STATUS.PE_SUCCESS:
+            raise LLTFError('Could not find harmonic filter status:' + ERROR_CODES.get(open_status.value, 'Unknown Error'))
         return avail, enable

@@ -8,18 +8,18 @@ from ..lltfpy.lltf import LLTF, PE_STATUS
 
 
 class Test(unittest.TestCase):
+    """
+    Tests LLTF functions.
     
-    def __init__(self):
-        self.conffile = ''
-        self.lltf = None
-
+    """
 
     def setUp(self):
         """
         Create class instance of LLTF.
 
         """
-        self.conffile = 'C:\Program Files (x86)\Photon etc\PHySpecV2\system.xml'
+        self.conffile = input('Config file: ')
+        self.conffile.encode('ASCII')
         self.lltf = LLTF(conffile=self.conffile)
 
 
@@ -111,7 +111,7 @@ class Test(unittest.TestCase):
         wavelength = 100
         with self.assertRaises(ValueError) as context:
             self.lltf.set_wave(wavelength=wavelength)
-        self.assertEqual(str(context.exception), 'Invalid input wavelength: PE_STATUS.PE_INVALID_WAVELENGTH')
+        self.assertEqual(str(context.exception), 'Invalid input wavelength:' + 'Requested wavelength is out of bounds.')
     
     
     def wave_correctly_set(self):
@@ -119,7 +119,7 @@ class Test(unittest.TestCase):
         Check that wavelength gets properly set by asserting that status returns the set wavelength.
         
         """
-        wavelength = 600
+        wavelength = 1000
         self.lltf.set_wave(wavelength=wavelength)
         status = self.lltf.status()
         self.assertEqual(status['central_wavelength'], wavelength)
@@ -135,6 +135,15 @@ class Test(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             minimum, maximum, extended_min, extended_max = self.lltf._grating_wave(gratingIndex=gratingIndex)
         self.assertEqual(str(context.exception), 'Grating index not found.')
+        
+        
+    def incorrect_key_value(self):
+        """
+        Tests that if an incorrect key is returned, an error statement is printed but no error is returned.
+
+        """
+        wavelength = self.lltf._get_wave()
+        self.assertEqual(wavelength, 'Could not retrieve wavelength:' + 'Supplied handle is corrupted or has a NULL value.')
         
         
 if __name__ == '__main__':
