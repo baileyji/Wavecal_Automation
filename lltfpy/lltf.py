@@ -4,7 +4,7 @@ This is the hardware class for access to the high contrast LLTF filter.
 """
 
 from logging import getLogger
-from ctypes import ct
+import ctypes as ct
 from sys import platform
 from enum import IntEnum
 
