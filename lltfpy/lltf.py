@@ -219,7 +219,7 @@ class LLTF:
                 if 500 < wavelength < 1000: #Double wavelength if below range to use second harmonics
                     wavelength *= 2
                 #Set wavelength
-                set_wave_status = pe_set_wavelength(self._handle, wavelength)  
+                set_wave_status = pe_set_wavelength(self._handle, ct.c_double(wavelength))  
                 if set_wave_status == PE_STATUS.PE_INVALID_WAVELENGTH:
                     raise ValueError('Invalid input wavelength: ' + ERROR_CODES.get(set_wave_status.value, 'Unknown Error'))
                 elif set_wave_status != PE_STATUS.PE_SUCCESS:
